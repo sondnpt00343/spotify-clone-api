@@ -1,0 +1,115 @@
+# Spotify Clone API - Phase 3 Tests (Artists & Tracks)
+# Use VS Code REST Client extension to run these tests
+
+### Health Check
+GET http://localhost:3000/health
+
+### Get all artists (browse)
+GET http://localhost:3000/api/artists
+
+### Search artists
+GET http://localhost:3000/api/artists?q=Đen&limit=5
+
+### Get trending artists
+GET http://localhost:3000/api/artists/trending?limit=5
+
+### Get specific artist (using seed data)
+GET http://localhost:3000/api/artists/550e8400-e29b-41d4-a716-446655440001
+
+### Get artist's popular tracks
+GET http://localhost:3000/api/artists/550e8400-e29b-41d4-a716-446655440001/tracks/popular?limit=5
+
+### Get artist's albums
+GET http://localhost:3000/api/artists/550e8400-e29b-41d4-a716-446655440001/albums
+
+### Follow artist (requires authentication - replace TOKEN)
+POST http://localhost:3000/api/artists/550e8400-e29b-41d4-a716-446655440001/follow
+Authorization: Bearer TOKEN_HERE
+
+### Unfollow artist (requires authentication - replace TOKEN)
+DELETE http://localhost:3000/api/artists/550e8400-e29b-41d4-a716-446655440001/follow
+Authorization: Bearer TOKEN_HERE
+
+### ===== TRACKS =====
+
+### Get all tracks (browse)
+GET http://localhost:3000/api/tracks
+
+### Search tracks
+GET http://localhost:3000/api/tracks?q=Lối&limit=5
+
+### Get popular tracks
+GET http://localhost:3000/api/tracks/popular?limit=10
+
+### Get trending tracks
+GET http://localhost:3000/api/tracks/trending?limit=10
+
+### Get specific track (using seed data)
+GET http://localhost:3000/api/tracks/770e8400-e29b-41d4-a716-446655440002
+
+### Play track (requires authentication - replace TOKEN)
+POST http://localhost:3000/api/tracks/770e8400-e29b-41d4-a716-446655440002/play
+Content-Type: application/json
+Authorization: Bearer TOKEN_HERE
+
+{
+  "position": 0
+}
+
+### Like track (requires authentication - replace TOKEN)
+POST http://localhost:3000/api/tracks/770e8400-e29b-41d4-a716-446655440002/like
+Authorization: Bearer TOKEN_HERE
+
+### Unlike track (requires authentication - replace TOKEN)
+DELETE http://localhost:3000/api/tracks/770e8400-e29b-41d4-a716-446655440002/like
+Authorization: Bearer TOKEN_HERE
+
+### Get user's liked tracks (requires authentication - replace TOKEN)
+GET http://localhost:3000/api/me/tracks/liked?limit=10
+Authorization: Bearer TOKEN_HERE
+
+### Get user's recently played tracks (requires authentication - replace TOKEN)
+GET http://localhost:3000/api/me/player/recently-played?limit=10
+Authorization: Bearer TOKEN_HERE
+
+### ===== ADMIN ROUTES (for testing) =====
+
+### Create new artist (admin - replace TOKEN)
+POST http://localhost:3000/api/artists
+Content-Type: application/json
+Authorization: Bearer TOKEN_HERE
+
+{
+  "name": "Test Artist",
+  "bio": "This is a test artist created via API",
+  "image_url": "https://via.placeholder.com/300x300/1db954/ffffff?text=TEST",
+  "background_image_url": "https://via.placeholder.com/1200x400/1db954/ffffff?text=TEST+BG",
+  "is_verified": false
+}
+
+### Create new track (admin - replace TOKEN and artist_id)
+POST http://localhost:3000/api/tracks
+Content-Type: application/json
+Authorization: Bearer TOKEN_HERE
+
+{
+  "title": "Test Track",
+  "duration": 180,
+  "audio_url": "https://sample-music.netlify.app/death_bed.mp3",
+  "image_url": "https://via.placeholder.com/300x300/1db954/ffffff?text=TEST+TRACK",
+  "artist_id": "550e8400-e29b-41d4-a716-446655440001"
+}
+
+### ===== EDGE CASES =====
+
+### Invalid artist ID
+GET http://localhost:3000/api/artists/invalid-id
+
+### Invalid track ID
+GET http://localhost:3000/api/tracks/invalid-id
+
+### Try to follow without authentication
+POST http://localhost:3000/api/artists/550e8400-e29b-41d4-a716-446655440001/follow
+
+### Try to like track without authentication
+POST http://localhost:3000/api/tracks/770e8400-e29b-41d4-a716-446655440002/like 

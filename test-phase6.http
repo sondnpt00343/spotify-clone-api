@@ -1,0 +1,359 @@
+# Spotify Clone API - Phase 6 Tests (File Upload & Advanced Features)
+# Use VS Code REST Client extension to run these tests
+
+### Health Check
+GET http://localhost:3000/health
+
+### ===== FILE UPLOAD TESTS =====
+
+### Upload user avatar (requires authentication - replace TOKEN)
+POST http://localhost:3000/api/upload/avatar
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+Authorization: Bearer TOKEN_HERE
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="avatar"; filename="avatar.jpg"
+Content-Type: image/jpeg
+
+< ./test-files/avatar.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Upload artist image (admin - replace TOKEN and ARTIST_ID)
+POST http://localhost:3000/api/upload/artist/ARTIST_ID_HERE/image
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+Authorization: Bearer TOKEN_HERE
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="image"; filename="artist.jpg"
+Content-Type: image/jpeg
+
+< ./test-files/artist.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Upload album cover (admin - replace TOKEN and ALBUM_ID)
+POST http://localhost:3000/api/upload/album/ALBUM_ID_HERE/cover
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+Authorization: Bearer TOKEN_HERE
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="cover"; filename="album-cover.jpg"
+Content-Type: image/jpeg
+
+< ./test-files/album-cover.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Upload playlist cover (owner only - replace TOKEN and PLAYLIST_ID)
+POST http://localhost:3000/api/upload/playlist/PLAYLIST_ID_HERE/cover
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+Authorization: Bearer TOKEN_HERE
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="cover"; filename="playlist-cover.jpg"
+Content-Type: image/jpeg
+
+< ./test-files/playlist-cover.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Upload track audio file (admin - replace TOKEN and TRACK_ID)
+POST http://localhost:3000/api/upload/track/TRACK_ID_HERE/audio
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+Authorization: Bearer TOKEN_HERE
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="audio"; filename="track.mp3"
+Content-Type: audio/mpeg
+
+< ./test-files/track.mp3
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Upload multiple images (requires authentication - replace TOKEN)
+POST http://localhost:3000/api/upload/images
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+Authorization: Bearer TOKEN_HERE
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="images"; filename="image1.jpg"
+Content-Type: image/jpeg
+
+< ./test-files/image1.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="images"; filename="image2.jpg"
+Content-Type: image/jpeg
+
+< ./test-files/image2.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### ===== FILE SERVING TESTS =====
+
+### Serve uploaded image file
+GET http://localhost:3000/api/upload/serve/images/FILENAME_HERE.jpg
+
+### Serve uploaded audio file
+GET http://localhost:3000/api/upload/serve/audio/FILENAME_HERE.mp3
+
+### Get file information (requires authentication - replace TOKEN)
+GET http://localhost:3000/api/upload/info/images/FILENAME_HERE.jpg
+Authorization: Bearer TOKEN_HERE
+
+### ===== PERFORMANCE & MONITORING =====
+
+### Performance health check
+GET http://localhost:3000/health/performance
+
+### Cache statistics (admin)
+GET http://localhost:3000/api/cache/stats
+
+### Clear specific cache type (admin - requires authentication)
+POST http://localhost:3000/api/cache/clear
+Content-Type: application/json
+Authorization: Bearer TOKEN_HERE
+
+{
+  "type": "search"
+}
+
+### Clear all cache (admin - requires authentication)
+POST http://localhost:3000/api/cache/clear
+Content-Type: application/json
+Authorization: Bearer TOKEN_HERE
+
+{}
+
+### ===== API DOCUMENTATION =====
+
+### View Swagger API Documentation
+GET http://localhost:3000/api-docs
+
+### Get OpenAPI JSON spec
+GET http://localhost:3000/api-docs/swagger.json
+
+### ===== ERROR HANDLING TESTS =====
+
+### Upload without file (should return error)
+POST http://localhost:3000/api/upload/avatar
+Authorization: Bearer TOKEN_HERE
+
+### Upload invalid file type (should return error)
+POST http://localhost:3000/api/upload/avatar
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+Authorization: Bearer TOKEN_HERE
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="avatar"; filename="document.pdf"
+Content-Type: application/pdf
+
+< ./test-files/document.pdf
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Upload oversized file (should return error)
+POST http://localhost:3000/api/upload/avatar
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+Authorization: Bearer TOKEN_HERE
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="avatar"; filename="large-image.jpg"
+Content-Type: image/jpeg
+
+< ./test-files/large-image.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Try to access non-existent file
+GET http://localhost:3000/api/upload/serve/images/non-existent-file.jpg
+
+### Upload without authentication (should return error)
+POST http://localhost:3000/api/upload/avatar
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="avatar"; filename="avatar.jpg"
+Content-Type: image/jpeg
+
+< ./test-files/avatar.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### ===== INTEGRATION TESTS =====
+
+### Search with caching (should show X-Cache header)
+GET http://localhost:3000/api/search?q=Đen&limit=5
+
+### Search same query again (should hit cache)
+GET http://localhost:3000/api/search?q=Đen&limit=5
+
+### Get trending searches with caching
+GET http://localhost:3000/api/search/trending?limit=5
+
+### Get trending again (should hit cache)
+GET http://localhost:3000/api/search/trending?limit=5
+
+### Artist details with caching
+GET http://localhost:3000/api/artists/ARTIST_ID_HERE
+
+### Artist details again (should hit cache)
+GET http://localhost:3000/api/artists/ARTIST_ID_HERE
+
+### ===== RATE LIMITING TESTS =====
+
+### Test upload rate limiting (try multiple rapid uploads)
+POST http://localhost:3000/api/upload/avatar
+Authorization: Bearer TOKEN_HERE
+
+###
+POST http://localhost:3000/api/upload/avatar
+Authorization: Bearer TOKEN_HERE
+
+###
+POST http://localhost:3000/api/upload/avatar
+Authorization: Bearer TOKEN_HERE
+
+### ===== COMPRESSION TESTS =====
+
+### Large response that should be compressed
+GET http://localhost:3000/api/search?q=music&limit=50
+
+### Response with compression headers
+GET http://localhost:3000/api/artists?limit=50
+
+### ===== ADMIN OPERATIONS =====
+
+### Delete uploaded file (admin only - replace TOKEN and FILENAME)
+DELETE http://localhost:3000/api/upload/images/FILENAME_HERE.jpg
+Authorization: Bearer TOKEN_HERE
+
+### Upload with admin permissions
+POST http://localhost:3000/api/upload/track/TRACK_ID_HERE/audio
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+Authorization: Bearer TOKEN_HERE
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="audio"; filename="new-track.mp3"
+Content-Type: audio/mpeg
+
+< ./test-files/new-track.mp3
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### ===== PERFORMANCE MONITORING =====
+
+### Monitor response times (check X-Response-Time header)
+GET http://localhost:3000/api/search?q=complex+search+query&limit=50
+
+### Monitor cache efficiency
+GET http://localhost:3000/api/cache/stats
+
+### Test pagination optimization
+GET http://localhost:3000/api/tracks?limit=100&offset=0
+
+### Test with invalid pagination (should be corrected)
+GET http://localhost:3000/api/tracks?limit=999&offset=-10
+
+### ===== SECURITY TESTS =====
+
+### Test request size limiting
+POST http://localhost:3000/api/upload/avatar
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+Authorization: Bearer TOKEN_HERE
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="avatar"; filename="huge-file.jpg"
+Content-Type: image/jpeg
+
+< ./test-files/huge-file.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Test file type validation
+POST http://localhost:3000/api/upload/avatar
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+Authorization: Bearer TOKEN_HERE
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="avatar"; filename="malicious.exe"
+Content-Type: application/x-executable
+
+< ./test-files/malicious.exe
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### ===== REAL-WORLD SCENARIOS =====
+
+### Complete user flow: Register -> Upload Avatar -> Search -> Play
+POST http://localhost:3000/api/auth/register
+Content-Type: application/json
+
+{
+  "username": "testuser_phase6",
+  "email": "testuser_phase6@example.com",
+  "password": "TestPassword123!",
+  "display_name": "Test User Phase 6"
+}
+
+### Then login to get token
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "testuser_phase6@example.com",
+  "password": "TestPassword123!"
+}
+
+### Use token from login response in subsequent requests
+### Upload profile picture
+POST http://localhost:3000/api/upload/avatar
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+Authorization: Bearer YOUR_TOKEN_FROM_LOGIN
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="avatar"; filename="profile.jpg"
+Content-Type: image/jpeg
+
+< ./test-files/profile.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Search for music
+GET http://localhost:3000/api/search?q=favorite+song&limit=10
+
+### Start playback
+PUT http://localhost:3000/api/me/player/play
+Content-Type: application/json
+Authorization: Bearer YOUR_TOKEN_FROM_LOGIN
+
+{
+  "track_id": "TRACK_ID_FROM_SEARCH",
+  "context_type": "search",
+  "context_id": "favorite+song"
+}
+
+### ===== FILE UPLOAD EDGE CASES =====
+
+### Upload with missing filename
+POST http://localhost:3000/api/upload/avatar
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+Authorization: Bearer TOKEN_HERE
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="avatar"
+Content-Type: image/jpeg
+
+< ./test-files/no-name.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Upload with wrong field name
+POST http://localhost:3000/api/upload/avatar
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+Authorization: Bearer TOKEN_HERE
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="wrong_field"; filename="avatar.jpg"
+Content-Type: image/jpeg
+
+< ./test-files/avatar.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Upload zero-byte file
+POST http://localhost:3000/api/upload/avatar
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+Authorization: Bearer TOKEN_HERE
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="avatar"; filename="empty.jpg"
+Content-Type: image/jpeg
+
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW-- 

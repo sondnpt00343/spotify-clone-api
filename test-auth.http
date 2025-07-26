@@ -1,0 +1,76 @@
+# Spotify Clone API - Authentication Tests
+# You can use VS Code REST Client extension to run these tests
+
+### Health Check
+GET http://localhost:3000/health
+
+### Register new user
+POST http://localhost:3000/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "testuser@example.com",
+  "username": "testuser",
+  "password": "Password123",
+  "display_name": "Test User"
+}
+
+### Login with test user
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "testuser@example.com",
+  "password": "Password123"
+}
+
+### Login with existing seed user
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@spotify.com",
+  "password": "password123"
+}
+
+### Get user profile (replace TOKEN with actual token from login)
+GET http://localhost:3000/api/users/me
+Authorization: Bearer TOKEN_HERE
+
+### Update user profile (replace TOKEN with actual token)
+PUT http://localhost:3000/api/users/me
+Content-Type: application/json
+Authorization: Bearer TOKEN_HERE
+
+{
+  "display_name": "Updated Test User",
+  "avatar_url": "https://example.com/avatar.jpg"
+}
+
+### Change password (replace TOKEN with actual token)
+POST http://localhost:3000/api/auth/change-password
+Content-Type: application/json
+Authorization: Bearer TOKEN_HERE
+
+{
+  "current_password": "Password123",
+  "new_password": "NewPassword123"
+}
+
+### Test invalid registration (missing fields)
+POST http://localhost:3000/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "invalid-email",
+  "username": "a"
+}
+
+### Test invalid login
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "nonexistent@example.com",
+  "password": "wrongpassword"
+} 

@@ -1,0 +1,195 @@
+# Spotify Clone API - Phase 4 Tests (Playlists & Albums)
+# Use VS Code REST Client extension to run these tests
+
+### Health Check
+GET http://localhost:3000/health
+
+### ===== PLAYLISTS =====
+
+### Browse public playlists
+GET http://localhost:3000/api/playlists
+
+### Search public playlists
+GET http://localhost:3000/api/playlists?q=test&limit=5
+
+### Get specific playlist (replace with valid playlist ID)
+GET http://localhost:3000/api/playlists/PLAYLIST_ID_HERE
+
+### Get playlist tracks (replace with valid playlist ID)
+GET http://localhost:3000/api/playlists/PLAYLIST_ID_HERE/tracks
+
+### Create new playlist (requires authentication - replace TOKEN)
+POST http://localhost:3000/api/playlists
+Content-Type: application/json
+Authorization: Bearer TOKEN_HERE
+
+{
+  "name": "My Test Playlist",
+  "description": "A playlist created for testing the API",
+  "is_public": true,
+  "cover_image_url": "https://via.placeholder.com/300x300/1db954/ffffff?text=TEST+PLAYLIST"
+}
+
+### Update playlist (requires authentication and ownership - replace TOKEN and PLAYLIST_ID)
+PUT http://localhost:3000/api/playlists/PLAYLIST_ID_HERE
+Content-Type: application/json
+Authorization: Bearer TOKEN_HERE
+
+{
+  "name": "Updated Test Playlist",
+  "description": "Updated description",
+  "is_public": false
+}
+
+### Add track to playlist (requires authentication and ownership - replace TOKENs and IDs)
+POST http://localhost:3000/api/playlists/PLAYLIST_ID_HERE/tracks
+Content-Type: application/json
+Authorization: Bearer TOKEN_HERE
+
+{
+  "track_id": "770e8400-e29b-41d4-a716-446655440002"
+}
+
+### Remove track from playlist (requires authentication and ownership - replace TOKENs and IDs)
+DELETE http://localhost:3000/api/playlists/PLAYLIST_ID_HERE/tracks/TRACK_ID_HERE
+Authorization: Bearer TOKEN_HERE
+
+### Reorder track in playlist (requires authentication and ownership - replace TOKENs and IDs)
+PUT http://localhost:3000/api/playlists/PLAYLIST_ID_HERE/tracks/TRACK_ID_HERE/position
+Content-Type: application/json
+Authorization: Bearer TOKEN_HERE
+
+{
+  "position": 1
+}
+
+### Follow playlist (requires authentication - replace TOKEN and PLAYLIST_ID)
+POST http://localhost:3000/api/playlists/PLAYLIST_ID_HERE/follow
+Authorization: Bearer TOKEN_HERE
+
+### Unfollow playlist (requires authentication - replace TOKEN and PLAYLIST_ID)
+DELETE http://localhost:3000/api/playlists/PLAYLIST_ID_HERE/follow
+Authorization: Bearer TOKEN_HERE
+
+### Get user's own playlists (requires authentication - replace TOKEN)
+GET http://localhost:3000/api/me/playlists
+Authorization: Bearer TOKEN_HERE
+
+### Get user's followed playlists (requires authentication - replace TOKEN)
+GET http://localhost:3000/api/me/playlists/followed
+Authorization: Bearer TOKEN_HERE
+
+### Delete playlist (requires authentication and ownership - replace TOKEN and PLAYLIST_ID)
+DELETE http://localhost:3000/api/playlists/PLAYLIST_ID_HERE
+Authorization: Bearer TOKEN_HERE
+
+### ===== ALBUMS =====
+
+### Browse albums
+GET http://localhost:3000/api/albums
+
+### Search albums
+GET http://localhost:3000/api/albums?q=Đen&limit=5
+
+### Get popular albums
+GET http://localhost:3000/api/albums/popular?limit=10
+
+### Get new releases
+GET http://localhost:3000/api/albums/new-releases?limit=10
+
+### Get specific album (using seed data)
+GET http://localhost:3000/api/albums/660e8400-e29b-41d4-a716-446655440002
+
+### Get album tracks (using seed data)
+GET http://localhost:3000/api/albums/660e8400-e29b-41d4-a716-446655440002/tracks
+
+### Like album (requires authentication - replace TOKEN)
+POST http://localhost:3000/api/albums/660e8400-e29b-41d4-a716-446655440002/like
+Authorization: Bearer TOKEN_HERE
+
+### Unlike album (requires authentication - replace TOKEN)
+DELETE http://localhost:3000/api/albums/660e8400-e29b-41d4-a716-446655440002/like
+Authorization: Bearer TOKEN_HERE
+
+### Get user's liked albums (requires authentication - replace TOKEN)
+GET http://localhost:3000/api/me/albums/liked
+Authorization: Bearer TOKEN_HERE
+
+### ===== ADMIN ROUTES (Albums) =====
+
+### Create new album (admin - replace TOKEN and artist_id)
+POST http://localhost:3000/api/albums
+Content-Type: application/json
+Authorization: Bearer TOKEN_HERE
+
+{
+  "title": "Test Album",
+  "description": "An album created for testing the API",
+  "cover_image_url": "https://via.placeholder.com/300x300/1db954/ffffff?text=TEST+ALBUM",
+  "release_date": "2024-01-01",
+  "artist_id": "550e8400-e29b-41d4-a716-446655440001"
+}
+
+### Update album (admin - replace TOKEN and ALBUM_ID)
+PUT http://localhost:3000/api/albums/ALBUM_ID_HERE
+Content-Type: application/json
+Authorization: Bearer TOKEN_HERE
+
+{
+  "title": "Updated Test Album",
+  "description": "Updated description",
+  "release_date": "2024-01-15"
+}
+
+### Delete album (admin - replace TOKEN and ALBUM_ID)
+DELETE http://localhost:3000/api/albums/ALBUM_ID_HERE
+Authorization: Bearer TOKEN_HERE
+
+### ===== EDGE CASES =====
+
+### Invalid playlist ID
+GET http://localhost:3000/api/playlists/invalid-id
+
+### Invalid album ID
+GET http://localhost:3000/api/albums/invalid-id
+
+### Try to create playlist without authentication
+POST http://localhost:3000/api/playlists
+Content-Type: application/json
+
+{
+  "name": "Test Playlist"
+}
+
+### Try to like album without authentication
+POST http://localhost:3000/api/albums/660e8400-e29b-41d4-a716-446655440002/like
+
+### Try to access private playlist without permission
+GET http://localhost:3000/api/playlists/PRIVATE_PLAYLIST_ID_HERE
+
+### Try to add track to playlist without ownership
+POST http://localhost:3000/api/playlists/SOMEONE_ELSES_PLAYLIST_ID/tracks
+Content-Type: application/json
+Authorization: Bearer TOKEN_HERE
+
+{
+  "track_id": "770e8400-e29b-41d4-a716-446655440002"
+}
+
+### ===== USER LIBRARY INTEGRATION =====
+
+### Get user's complete library overview (requires authentication - replace TOKEN)
+GET http://localhost:3000/api/me/tracks/liked?limit=5
+Authorization: Bearer TOKEN_HERE
+
+###
+GET http://localhost:3000/api/me/albums/liked?limit=5
+Authorization: Bearer TOKEN_HERE
+
+###
+GET http://localhost:3000/api/me/playlists?limit=5
+Authorization: Bearer TOKEN_HERE
+
+###
+GET http://localhost:3000/api/me/playlists/followed?limit=5
+Authorization: Bearer TOKEN_HERE 
