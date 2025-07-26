@@ -824,19 +824,55 @@ class AdminDashboard {
         // Determine the correct endpoint and field name based on type and field
         let endpoint;
         let fieldKey;
+        let needsResourceId = false;
         
         if (fieldName === 'avatar_file' || type === 'avatar') {
             // Use avatar upload endpoint for user avatars
             endpoint = `${this.apiBase}/upload/avatar`;
             fieldKey = 'avatar';
-        } else if (type === 'audio') {
-            // For audio files, we might need a different endpoint in the future
+        } else if (fieldName === 'image_file' && this.currentSection === 'artists') {
+            // Artist image upload - needs artist ID
+            endpoint = `${this.apiBase}/upload/artist/{resourceId}/image`;
+            fieldKey = 'image';
+            needsResourceId = true;
+        } else if (fieldName === 'background_file' && this.currentSection === 'artists') {
+            // Artist background image - no specific endpoint, use generic
+            endpoint = `${this.apiBase}/upload/images`;
+            fieldKey = 'images';
+        } else if (fieldName === 'cover_file' && this.currentSection === 'albums') {
+            // Album cover upload - needs album ID
+            endpoint = `${this.apiBase}/upload/album/{resourceId}/cover`;
+            fieldKey = 'cover';
+            needsResourceId = true;
+        } else if (fieldName === 'cover_file' && this.currentSection === 'playlists') {
+            // Playlist cover upload - needs playlist ID
+            endpoint = `${this.apiBase}/upload/playlist/{resourceId}/cover`;
+            fieldKey = 'cover';
+            needsResourceId = true;
+        } else if (fieldName === 'audio_file' && this.currentSection === 'tracks') {
+            // Track audio upload - needs track ID
+            endpoint = `${this.apiBase}/upload/track/{resourceId}/audio`;
+            fieldKey = 'audio';
+            needsResourceId = true;
+        } else if (fieldName === 'image_file' && this.currentSection === 'tracks') {
+            // Track image - no specific endpoint, use generic
             endpoint = `${this.apiBase}/upload/images`;
             fieldKey = 'images';
         } else {
-            // Use generic images endpoint for other images
+            // Use generic images endpoint for other images (fallback)
             endpoint = `${this.apiBase}/upload/images`;
             fieldKey = 'images';
+        }
+        
+        // For resource-specific uploads, we need to handle this differently
+        // if the resource doesn't exist yet (create mode)
+        if (needsResourceId && !this.currentEditId) {
+            // Fall back to generic upload for new resources
+            endpoint = `${this.apiBase}/upload/images`;
+            fieldKey = 'images';
+        } else if (needsResourceId && this.currentEditId) {
+            // Replace placeholder with actual ID
+            endpoint = endpoint.replace('{resourceId}', this.currentEditId);
         }
         
         formData.append(fieldKey, file);
@@ -856,8 +892,8 @@ class AdminDashboard {
             console.log('Upload result:', result);
             
             // Handle different response structures
-            if (fieldKey === 'avatar') {
-                // Avatar upload response: { file: { url, filename, size } }
+            if (fieldKey === 'avatar' || fieldKey === 'image' || fieldKey === 'cover' || fieldKey === 'audio') {
+                // Specific resource upload response: { file: { url, filename, size } }
                 return result.file?.url || result.file?.filename;
             } else {
                 // Generic images upload response: { data: [{ url, filename }] }

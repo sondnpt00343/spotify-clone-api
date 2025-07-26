@@ -40,7 +40,7 @@ export class UploadController {
         message: 'Avatar uploaded successfully',
         file: {
           filename: fileResult.filename,
-          url: pathToUrl(fileResult.url, req), // Convert path to full URL for response
+          url: fileResult.url, // Return path only (not full URL)
           size: fileResult.size
         }
       });
@@ -102,7 +102,7 @@ export class UploadController {
         artist_id: artistId,
         file: {
           filename: fileResult.filename,
-          url: pathToUrl(fileResult.url, req), // Convert path to full URL for response
+          url: fileResult.url, // Return path only (not full URL)
           size: fileResult.size
         }
       });
@@ -164,7 +164,7 @@ export class UploadController {
         album_id: albumId,
         file: {
           filename: fileResult.filename,
-          url: pathToUrl(fileResult.url, req), // Convert path to full URL for response
+          url: fileResult.url, // Return path only (not full URL)
           size: fileResult.size
         }
       });
@@ -234,7 +234,7 @@ export class UploadController {
         playlist_id: playlistId,
         file: {
           filename: fileResult.filename,
-          url: pathToUrl(fileResult.url, req), // Convert path to full URL for response
+          url: fileResult.url, // Return path only (not full URL)
           size: fileResult.size
         }
       });
@@ -288,7 +288,7 @@ export class UploadController {
         track_id: trackId,
         file: {
           filename: fileResult.filename,
-          url: pathToUrl(fileResult.url, req), // Convert path to full URL for response
+          url: fileResult.url, // Return path only (not full URL)
           size: fileResult.size,
           metadata: fileResult.metadata
         }
@@ -487,7 +487,7 @@ export class UploadController {
         size: stats.size,
         created_at: stats.birthtime,
         modified_at: stats.mtime,
-        url: pathToUrl(filePath_url, req) // Convert path to full URL for response
+        url: filePath_url // Return path only (will be converted by response middleware)
       });
     } catch (error) {
       next(error);
@@ -520,7 +520,7 @@ export class UploadController {
           const fileResult = await processUploadedFile(file as Express.Multer.File, 'image');
           uploadedFiles.push({
             filename: fileResult.filename,
-            url: pathToUrl(fileResult.url, req), // Convert path to full URL for response
+            url: fileResult.url, // Return path only (not full URL)
             size: fileResult.size,
             originalname: fileResult.originalname
           });

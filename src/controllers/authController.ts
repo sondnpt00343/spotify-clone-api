@@ -46,7 +46,7 @@ export class AuthController {
       const refreshToken = generateRefreshToken(payload);
 
       // Return user data (without password) and tokens
-      const userResponse = UserModel.toResponse(newUser, req);
+      const userResponse = UserModel.toResponse(newUser);
 
       res.status(201).json({
         message: 'User registered successfully',
@@ -94,7 +94,7 @@ export class AuthController {
       const refreshToken = generateRefreshToken(payload);
 
       // Return user data (without password) and tokens
-      const userResponse = UserModel.toResponse(user, req);
+      const userResponse = UserModel.toResponse(user);
 
       res.status(200).json({
         message: 'Login successful',
@@ -172,7 +172,7 @@ export class AuthController {
       }
 
       // Return updated user profile
-      const userResponse = UserModel.toResponse(updatedUser, req);
+      const userResponse = UserModel.toResponse(updatedUser);
 
       res.status(200).json({
         message: 'Profile updated successfully',

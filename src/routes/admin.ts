@@ -96,7 +96,7 @@ router.get('/users/:id', adminLimiter, async (req, res) => {
       });
     }
 
-            const userResponse = UserModel.toResponse(user, req);
+            const userResponse = UserModel.toResponse(user);
     res.json({
       success: true,
       data: userResponse
@@ -134,7 +134,7 @@ router.put('/users/:id', adminLimiter, async (req, res) => {
       });
     }
 
-            const userResponse = UserModel.toResponse(updatedUser, req);
+            const userResponse = UserModel.toResponse(updatedUser);
     res.json({
       success: true,
       data: userResponse,

@@ -117,14 +117,10 @@ export class UserModel {
     await db('users').where({ id }).del();
   }
 
-  // Convert User to UserResponse (remove sensitive data and map file URLs)
-  static toResponse(user: User, req?: any): UserResponse {
+  // Convert User to UserResponse (remove sensitive data)
+  static toResponse(user: User): UserResponse {
     const { password_hash, ...userResponse } = user;
-    // Only map URLs if req is provided
-    if (req) {
-      const { mapFileUrls } = require('../utils/response');
-      return mapFileUrls(userResponse, req);
-    }
+    // Response middleware will automatically convert file paths to URLs
     return userResponse;
   }
 

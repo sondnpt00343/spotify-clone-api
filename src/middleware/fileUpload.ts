@@ -183,7 +183,12 @@ export const getFileStats = (filePath: string): Promise<fs.Stats> => {
 
 // Generate file URL for serving (now returns path for storage)
 export const generateFilePath = (filename: string, type: 'image' | 'audio'): string => {
-  return `/uploads/${type}s/${filename}`;
+  if (type === 'image') {
+    return `/uploads/images/${filename}`;
+  } else if (type === 'audio') {
+    return `/uploads/audio/${filename}`;
+  }
+  return '';
 };
 
 // Convert stored path to full URL with current origin
