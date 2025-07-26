@@ -13,8 +13,10 @@ export const generateAccessToken = (payload: JwtPayload): string => {
     throw new Error('JWT_SECRET is not defined in environment variables');
   }
 
-  return jwt.sign(payload as any, secret, {
-    expiresIn: process.env.JWT_EXPIRE || '1h'
+  return jwt.sign(payload, secret, {
+    expiresIn: process.env.JWT_EXPIRE || '1h',
+    issuer: 'spotify-clone-api',
+    audience: 'spotify-clone-client'
   });
 };
 

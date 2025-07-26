@@ -47,7 +47,7 @@ const config: { [key: string]: Knex.Config } = {
   production: {
     client: 'sqlite3',
     connection: {
-      filename: process.env.DATABASE_URL || './production.sqlite'
+      filename: process.env.DATAAPP_URL || './production.sqlite'
     },
     useNullAsDefault: true,
     migrations: {

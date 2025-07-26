@@ -216,7 +216,7 @@ src/
 ```env
 NODE_ENV=development
 PORT=3000
-DATABASE_URL=./database.sqlite
+DATAAPP_URL=./database.sqlite
 JWT_SECRET=your-super-secret-jwt-key
 JWT_EXPIRE=1h
 UPLOAD_PATH=./uploads

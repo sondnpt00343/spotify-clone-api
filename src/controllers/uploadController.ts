@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import path from 'path';
 import fs from 'fs';
 import { CustomError } from '../middleware/errorHandler';
-import { processUploadedFile, generateFileUrl, deleteFile } from '../middleware/fileUpload';
+import { processUploadedFile, generateFileUrl, deleteFile, pathToUrl } from '../middleware/fileUpload';
 import { UserModel } from '../models/User';
 import { ArtistModel } from '../models/Artist';
 import { AlbumModel } from '../models/Album';
@@ -31,16 +31,16 @@ export class UploadController {
       // Process uploaded file
       const fileResult = await processUploadedFile(req.file, 'image');
 
-      // Update user avatar URL in database
+      // Update user avatar path in database (store path, not full URL)
       await UserModel.update(userId, {
-        avatar_url: fileResult.url
+        avatar_url: fileResult.url // This is now a path
       });
 
       res.status(200).json({
         message: 'Avatar uploaded successfully',
         file: {
           filename: fileResult.filename,
-          url: fileResult.url,
+          url: pathToUrl(fileResult.url, req), // Convert path to full URL for response
           size: fileResult.size
         }
       });
@@ -92,9 +92,9 @@ export class UploadController {
       // Process uploaded file
       const fileResult = await processUploadedFile(req.file, 'image');
 
-      // Update artist image URL in database
+      // Update artist image path in database (store path, not full URL)
       await ArtistModel.update(artistId, {
-        image_url: fileResult.url
+        image_url: fileResult.url // This is now a path
       });
 
       res.status(200).json({
@@ -102,7 +102,7 @@ export class UploadController {
         artist_id: artistId,
         file: {
           filename: fileResult.filename,
-          url: fileResult.url,
+          url: pathToUrl(fileResult.url, req), // Convert path to full URL for response
           size: fileResult.size
         }
       });
@@ -154,9 +154,9 @@ export class UploadController {
       // Process uploaded file
       const fileResult = await processUploadedFile(req.file, 'image');
 
-      // Update album cover URL in database
+      // Update album cover path in database (store path, not full URL)
       await AlbumModel.update(albumId, {
-        cover_image_url: fileResult.url
+        cover_image_url: fileResult.url // This is now a path
       });
 
       res.status(200).json({
@@ -164,7 +164,7 @@ export class UploadController {
         album_id: albumId,
         file: {
           filename: fileResult.filename,
-          url: fileResult.url,
+          url: pathToUrl(fileResult.url, req), // Convert path to full URL for response
           size: fileResult.size
         }
       });
@@ -224,9 +224,9 @@ export class UploadController {
       // Process uploaded file
       const fileResult = await processUploadedFile(req.file, 'image');
 
-      // Update playlist cover URL in database
+      // Update playlist cover path in database (store path, not full URL)
       await PlaylistModel.update(userId, playlistId, {
-        cover_image_url: fileResult.url
+        cover_image_url: fileResult.url // This is now a path
       });
 
       res.status(200).json({
@@ -234,7 +234,7 @@ export class UploadController {
         playlist_id: playlistId,
         file: {
           filename: fileResult.filename,
-          url: fileResult.url,
+          url: pathToUrl(fileResult.url, req), // Convert path to full URL for response
           size: fileResult.size
         }
       });
@@ -288,7 +288,7 @@ export class UploadController {
         track_id: trackId,
         file: {
           filename: fileResult.filename,
-          url: fileResult.url,
+          url: pathToUrl(fileResult.url, req), // Convert path to full URL for response
           size: fileResult.size,
           metadata: fileResult.metadata
         }
@@ -477,9 +477,9 @@ export class UploadController {
         throw error;
       }
 
-      // Get file stats
+              // Get file stats
       const stats = fs.statSync(filePath);
-      const url = generateFileUrl(filename, type === 'images' ? 'image' : 'audio');
+      const filePath_url = generateFileUrl(filename, type === 'images' ? 'image' : 'audio'); // This returns path now
 
       res.status(200).json({
         filename: filename,
@@ -487,7 +487,7 @@ export class UploadController {
         size: stats.size,
         created_at: stats.birthtime,
         modified_at: stats.mtime,
-        url: url
+        url: pathToUrl(filePath_url, req) // Convert path to full URL for response
       });
     } catch (error) {
       next(error);
@@ -520,7 +520,7 @@ export class UploadController {
           const fileResult = await processUploadedFile(file as Express.Multer.File, 'image');
           uploadedFiles.push({
             filename: fileResult.filename,
-            url: fileResult.url,
+            url: pathToUrl(fileResult.url, req), // Convert path to full URL for response
             size: fileResult.size,
             originalname: fileResult.originalname
           });

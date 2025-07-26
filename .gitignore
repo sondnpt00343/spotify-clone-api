@@ -21,7 +21,6 @@ build/
 *.db
 
 # Uploads
-uploads/
 temp/
 
 # Logs

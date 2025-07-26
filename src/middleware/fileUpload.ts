@@ -81,7 +81,7 @@ export const uploadImage = multer({
   storage: imageStorage,
   fileFilter: imageFileFilter,
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit for images
+    fileSize: 15 * 1024 * 1024, // 15MB limit for images
     files: 1
   }
 });
@@ -98,7 +98,7 @@ export const uploadAudio = multer({
 export const uploadToMemory = multer({
   storage: memoryStorage,
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit for memory uploads
+    fileSize: 15 * 1024 * 1024, // 15MB limit for memory uploads
     files: 1
   }
 });
@@ -108,7 +108,7 @@ export const uploadMultipleImages = multer({
   storage: imageStorage,
   fileFilter: imageFileFilter,
   limits: {
-    fileSize: 5 * 1024 * 1024,
+    fileSize: 15 * 1024 * 1024, // 15MB limit for multiple images
     files: 5 // Maximum 5 images
   }
 });
@@ -118,7 +118,7 @@ export const uploadAvatar = multer({
   storage: imageStorage,
   fileFilter: imageFileFilter,
   limits: {
-    fileSize: 2 * 1024 * 1024, // 2MB limit for avatars
+    fileSize: 15 * 1024 * 1024, // 15MB limit for avatars
     files: 1
   }
 });
@@ -128,7 +128,7 @@ export const uploadCover = multer({
   storage: imageStorage,
   fileFilter: imageFileFilter,
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit for cover images
+    fileSize: 15 * 1024 * 1024, // 15MB limit for cover images
     files: 1
   }
 });
@@ -181,10 +181,35 @@ export const getFileStats = (filePath: string): Promise<fs.Stats> => {
   });
 };
 
-// Generate file URL for serving
+// Generate file URL for serving (now returns path for storage)
+export const generateFilePath = (filename: string, type: 'image' | 'audio'): string => {
+  return `/uploads/${type}s/${filename}`;
+};
+
+// Convert stored path to full URL with current origin
+export const pathToUrl = (path: string | null | undefined, req?: any): string | null => {
+  if (!path) return null;
+  
+  // If already full URL, return as is (for backward compatibility)
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    return path;
+  }
+  
+  // Get base URL from request or environment
+  let baseUrl = process.env.APP_URL || 'http://localhost:3000';
+  
+  if (req) {
+    const protocol = req.protocol || 'http';
+    const host = req.get('host') || 'localhost:3000';
+    baseUrl = `${protocol}://${host}`;
+  }
+  
+  return `${baseUrl}${path}`;
+};
+
+// Legacy function for backward compatibility - now calls generateFilePath
 export const generateFileUrl = (filename: string, type: 'image' | 'audio'): string => {
-  const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
-  return `${baseUrl}/uploads/${type}s/${filename}`;
+  return generateFilePath(filename, type);
 };
 
 // Clean up temporary files
@@ -242,7 +267,7 @@ export const processUploadedFile = async (
   type: 'image' | 'audio',
   options?: ImageProcessingOptions
 ): Promise<FileUploadResult> => {
-  const url = generateFileUrl(file.filename, type);
+  const path = generateFilePath(file.filename, type);
   
   const result: FileUploadResult = {
     filename: file.filename,
@@ -250,7 +275,8 @@ export const processUploadedFile = async (
     size: file.size,
     mimetype: file.mimetype,
     path: file.path,
-    url: url
+    url: path, // Now stores path instead of full URL
+    metadata: undefined
   };
 
   // TODO: Add image processing with sharp

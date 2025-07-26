@@ -1,0 +1,1144 @@
+// Admin Dashboard JavaScript
+class AdminDashboard {
+    constructor() {
+        this.currentSection = 'dashboard';
+        this.currentEditId = null;
+        this.apiBase = '/api';
+        
+        // Check authentication first
+        if (!this.checkAuth()) {
+            return;
+        }
+        
+        this.initializeEventListeners();
+        this.loadDashboard();
+        this.setupUserInfo();
+    }
+
+    // Check if user is authenticated
+    checkAuth() {
+        const accessToken = localStorage.getItem('admin_access_token');
+        if (!accessToken) {
+            this.redirectToLogin();
+            return false;
+        }
+        return true;
+    }
+
+    // Redirect to login page
+    redirectToLogin() {
+        window.location.href = '/admin/auth';
+    }
+
+    // Get access token for API calls
+    getAccessToken() {
+        return localStorage.getItem('admin_access_token');
+    }
+
+    // Get user info
+    getUserInfo() {
+        const userStr = localStorage.getItem('admin_user');
+        return userStr ? JSON.parse(userStr) : null;
+    }
+
+    // Setup user info display
+    setupUserInfo() {
+        const user = this.getUserInfo();
+        if (user) {
+            const userNameElement = document.getElementById('user-name');
+            if (userNameElement) {
+                userNameElement.textContent = user.display_name || user.username;
+            }
+            
+            // Update user info tooltip
+            const userInfoElement = document.getElementById('user-info');
+            if (userInfoElement) {
+                userInfoElement.title = `Logged in as: ${user.email}`;
+            }
+            
+            console.log('Logged in as:', user.username);
+        }
+    }
+
+    // Handle API authentication
+    async makeAuthenticatedRequest(url, options = {}) {
+        const token = this.getAccessToken();
+        if (!token) {
+            this.redirectToLogin();
+            throw new Error('No access token');
+        }
+
+        const authOptions = {
+            ...options,
+            headers: {
+                ...options.headers,
+                'Authorization': `Bearer ${token}`
+            }
+        };
+
+        const response = await fetch(url, authOptions);
+        
+        // If token expired, try to refresh
+        if (response.status === 401) {
+            const refreshed = await this.refreshToken();
+            if (refreshed) {
+                // Retry with new token
+                authOptions.headers['Authorization'] = `Bearer ${this.getAccessToken()}`;
+                return fetch(url, authOptions);
+            } else {
+                this.redirectToLogin();
+                throw new Error('Authentication failed');
+            }
+        }
+        
+        return response;
+    }
+
+    // Refresh access token
+    async refreshToken() {
+        const refreshToken = localStorage.getItem('admin_refresh_token');
+        if (!refreshToken) {
+            return false;
+        }
+
+        try {
+            const response = await fetch(`${this.apiBase}/auth/refresh-token`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${refreshToken}`
+                }
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                localStorage.setItem('admin_access_token', result.access_token);
+                return true;
+            }
+        } catch (error) {
+            console.error('Token refresh error:', error);
+        }
+        
+        return false;
+    }
+
+    // Logout function with confirmation
+    logout() {
+        if (confirm('Bạn có chắc chắn muốn đăng xuất?')) {
+            // Clear all stored data
+            localStorage.removeItem('admin_access_token');
+            localStorage.removeItem('admin_refresh_token');
+            localStorage.removeItem('admin_user');
+            
+            // Show notification
+            this.showNotification('Đăng xuất thành công!', 'success');
+            
+            // Redirect after short delay
+            setTimeout(() => {
+                this.redirectToLogin();
+            }, 1000);
+        }
+    }
+
+    // Initialize all event listeners
+    initializeEventListeners() {
+        // Sidebar navigation
+        document.querySelectorAll('.menu-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                const section = e.currentTarget.dataset.section;
+                this.switchSection(section);
+            });
+        });
+
+        // Add new button
+        document.getElementById('add-new-btn').addEventListener('click', async () => {
+            await this.openModal('add');
+        });
+
+        // Modal controls
+        document.querySelector('.modal-close').addEventListener('click', () => {
+            this.closeModal();
+        });
+
+        document.getElementById('cancel-btn').addEventListener('click', () => {
+            this.closeModal();
+        });
+
+        // Form submission
+        document.getElementById('modal-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.handleSubmit();
+        });
+
+        // Close modal on backdrop click
+        document.getElementById('modal').addEventListener('click', (e) => {
+            if (e.target.id === 'modal') {
+                this.closeModal();
+            }
+        });
+
+        // Event delegation for edit and delete buttons
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.btn-edit')) {
+                e.preventDefault();
+                const button = e.target.closest('.btn-edit');
+                const section = button.dataset.section;
+                const id = button.dataset.id;
+                console.log('Edit clicked:', section, id);
+                this.editItem(section, id);
+            }
+            
+            if (e.target.closest('.btn-delete')) {
+                e.preventDefault();
+                const button = e.target.closest('.btn-delete');
+                const section = button.dataset.section;
+                const id = button.dataset.id;
+                console.log('Delete clicked:', section, id);
+                this.deleteItem(section, id);
+            }
+        });
+
+        // Logout button event listener
+        document.getElementById('logout-btn').addEventListener('click', (e) => {
+            e.preventDefault();
+            this.logout();
+        });
+    }
+
+    // Switch between sections
+    switchSection(section) {
+        // Update sidebar active state
+        document.querySelectorAll('.menu-item').forEach(item => {
+            item.classList.remove('active');
+        });
+        document.querySelector(`[data-section="${section}"]`).classList.add('active');
+
+        // Update content sections
+        document.querySelectorAll('.content-section').forEach(section => {
+            section.classList.remove('active');
+        });
+        document.getElementById(`${section}-section`).classList.add('active');
+
+        // Update page title and controls
+        this.currentSection = section;
+        this.updatePageTitle(section);
+        this.updateHeaderControls(section);
+
+        // Load section data
+        if (section !== 'dashboard') {
+            this.loadSectionData(section);
+        }
+    }
+
+    // Update page title
+    updatePageTitle(section) {
+        const titles = {
+            dashboard: 'Dashboard',
+            users: 'Users Management',
+            artists: 'Artists Management',
+            albums: 'Albums Management',
+            tracks: 'Tracks Management',
+            playlists: 'Playlists Management'
+        };
+        document.getElementById('page-title').textContent = titles[section];
+    }
+
+    // Update header controls
+    updateHeaderControls(section) {
+        const addBtn = document.getElementById('add-new-btn');
+        if (section === 'dashboard') {
+            addBtn.style.display = 'none';
+        } else {
+            addBtn.style.display = 'flex';
+            addBtn.querySelector('span').textContent = `Add New ${section.slice(0, -1)}`;
+        }
+    }
+
+    // Load dashboard stats
+    async loadDashboard() {
+        this.showLoading();
+        try {
+            const stats = await this.fetchData('stats');
+
+            document.getElementById('total-users').textContent = stats.users || 0;
+            document.getElementById('total-artists').textContent = stats.artists || 0;
+            document.getElementById('total-albums').textContent = stats.albums || 0;
+            document.getElementById('total-tracks').textContent = stats.tracks || 0;
+            document.getElementById('total-playlists').textContent = stats.playlists || 0;
+        } catch (error) {
+            console.error('Error loading dashboard:', error);
+            this.showNotification('Error loading dashboard data', 'error');
+        }
+        this.hideLoading();
+    }
+
+    // Load section data
+    async loadSectionData(section) {
+        this.showLoading();
+        try {
+            const data = await this.fetchData(section);
+            this.renderTable(section, data);
+        } catch (error) {
+            console.error(`Error loading ${section}:`, error);
+            this.showNotification(`Error loading ${section} data`, 'error');
+        }
+        this.hideLoading();
+    }
+
+    // Fetch data from API with authentication
+    async fetchData(endpoint) {
+        try {
+            let url = `${this.apiBase}/${endpoint}`;
+            
+            // Special handling for some endpoints
+            if (endpoint === 'users') {
+                url = `${this.apiBase}/admin/users`;
+            } else if (endpoint === 'playlists') {
+                url = `${this.apiBase}/playlists`;
+            } else if (endpoint === 'stats') {
+                url = `${this.apiBase}/admin/stats`;
+                const response = await this.makeAuthenticatedRequest(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const result = await response.json();
+                return result.data;
+            }
+
+            const response = await this.makeAuthenticatedRequest(url);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const result = await response.json();
+            return result.data || result.artists || result.albums || result.tracks || result.playlists || result;
+        } catch (error) {
+            console.error(`Error fetching ${endpoint}:`, error);
+            return [];
+        }
+    }
+
+    // Render table for a section
+    renderTable(section, data) {
+        const tableBody = document.querySelector(`#${section}-table tbody`);
+        if (!tableBody) return;
+
+        tableBody.innerHTML = '';
+
+        if (!data || data.length === 0) {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="100%" class="text-center text-muted">No ${section} found</td>
+                </tr>
+            `;
+            return;
+        }
+
+        data.forEach(item => {
+            const row = this.createTableRow(section, item);
+            tableBody.appendChild(row);
+        });
+    }
+
+    // Create table row for an item
+    createTableRow(section, item) {
+        const row = document.createElement('tr');
+        
+        switch (section) {
+            case 'users':
+                row.innerHTML = this.createUserRow(item);
+                break;
+            case 'artists':
+                row.innerHTML = this.createArtistRow(item);
+                break;
+            case 'albums':
+                row.innerHTML = this.createAlbumRow(item);
+                break;
+            case 'tracks':
+                row.innerHTML = this.createTrackRow(item);
+                break;
+            case 'playlists':
+                row.innerHTML = this.createPlaylistRow(item);
+                break;
+        }
+
+        return row;
+    }
+
+    // Create user table row
+    createUserRow(user) {
+        return `
+            <td>
+                <img src="${user.avatar_url || '/static/admin/default-avatar.png'}" 
+                     alt="${user.display_name}" 
+                     onerror="this.src='/static/admin/default-avatar.png'">
+            </td>
+            <td>${user.email}</td>
+            <td>${user.username}</td>
+            <td>${user.display_name || '-'}</td>
+            <td>${new Date(user.created_at).toLocaleDateString()}</td>
+            <td>
+                <div class="action-buttons">
+                    <button class="btn btn-edit btn-sm" data-section="users" data-id="${user.id}">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-danger btn-sm btn-delete" data-section="users" data-id="${user.id}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </td>
+        `;
+    }
+
+    // Create artist table row
+    createArtistRow(artist) {
+        return `
+            <td>
+                <img src="${artist.image_url || '/static/admin/default-artist.png'}" 
+                     alt="${artist.name}" 
+                     onerror="this.src='/static/admin/default-artist.png'">
+            </td>
+            <td>${artist.name}</td>
+            <td>${(artist.monthly_listeners || 0).toLocaleString()}</td>
+            <td>
+                <span class="badge ${artist.is_verified ? 'badge-success' : 'badge-danger'}">
+                    ${artist.is_verified ? 'Verified' : 'Not Verified'}
+                </span>
+            </td>
+            <td>${new Date(artist.created_at).toLocaleDateString()}</td>
+            <td>
+                <div class="action-buttons">
+                    <button class="btn btn-edit btn-sm" data-section="artists" data-id="${artist.id}">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-danger btn-sm btn-delete" data-section="artists" data-id="${artist.id}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </td>
+        `;
+    }
+
+    // Create album table row
+    createAlbumRow(album) {
+        return `
+            <td>
+                <img src="${album.cover_image_url || '/static/admin/default-album.png'}" 
+                     alt="${album.title}" 
+                     class="album-cover"
+                     onerror="this.src='/static/admin/default-album.png'">
+            </td>
+            <td>${album.title}</td>
+            <td>${album.artist_name || '-'}</td>
+            <td>${new Date(album.release_date).toLocaleDateString()}</td>
+            <td>${album.total_tracks || 0}</td>
+            <td>
+                <div class="action-buttons">
+                    <button class="btn btn-edit btn-sm" data-section="albums" data-id="${album.id}">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-danger btn-sm btn-delete" data-section="albums" data-id="${album.id}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </td>
+        `;
+    }
+
+    // Create track table row
+    createTrackRow(track) {
+        const duration = this.formatDuration(track.duration);
+        return `
+            <td>
+                <img src="${track.image_url || track.album_cover_image_url || '/static/admin/default-track.png'}" 
+                     alt="${track.title}" 
+                     class="track-image"
+                     onerror="this.src='/static/admin/default-track.png'">
+            </td>
+            <td>${track.title}</td>
+            <td>${track.artist_name || '-'}</td>
+            <td>${track.album_title || '-'}</td>
+            <td>${duration}</td>
+            <td>${(track.play_count || 0).toLocaleString()}</td>
+            <td>
+                <div class="action-buttons">
+                    <button class="btn btn-edit btn-sm" data-section="tracks" data-id="${track.id}">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-danger btn-sm btn-delete" data-section="tracks" data-id="${track.id}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </td>
+        `;
+    }
+
+    // Create playlist table row
+    createPlaylistRow(playlist) {
+        return `
+            <td>
+                <img src="${playlist.cover_image_url || '/static/admin/default-playlist.png'}" 
+                     alt="${playlist.name}" 
+                     onerror="this.src='/static/admin/default-playlist.png'">
+            </td>
+            <td>${playlist.name}</td>
+            <td>${playlist.user_username || '-'}</td>
+            <td>
+                <span class="badge ${playlist.is_public ? 'badge-success' : 'badge-danger'}">
+                    ${playlist.is_public ? 'Public' : 'Private'}
+                </span>
+            </td>
+            <td>${playlist.total_tracks || 0}</td>
+            <td>${new Date(playlist.created_at).toLocaleDateString()}</td>
+            <td>
+                <div class="action-buttons">
+                    <button class="btn btn-edit btn-sm" data-section="playlists" data-id="${playlist.id}">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-danger btn-sm btn-delete" data-section="playlists" data-id="${playlist.id}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </td>
+        `;
+    }
+
+    // Open modal for add/edit
+    async openModal(mode, itemId = null) {
+        console.log('openModal called:', mode, itemId, this.currentSection);
+        this.currentEditId = itemId;
+        const modal = document.getElementById('modal');
+        const title = document.getElementById('modal-title');
+        const formFields = document.getElementById('form-fields');
+
+        title.textContent = mode === 'add' ? 
+            `Add New ${this.currentSection.slice(0, -1)}` : 
+            `Edit ${this.currentSection.slice(0, -1)}`;
+
+        formFields.innerHTML = this.generateFormFields(this.currentSection);
+        
+        // Load select options first
+        await this.loadSelectOptions();
+        
+        // Add file input change listeners
+        this.setupFileInputs();
+        
+        if (mode === 'edit' && itemId) {
+            await this.populateForm(itemId);
+        }
+
+        modal.classList.add('show');
+        console.log('Modal should be visible now');
+    }
+
+    // Close modal
+    closeModal() {
+        console.log('Closing modal');
+        const modal = document.getElementById('modal');
+        modal.classList.remove('show');
+        this.currentEditId = null;
+        
+        // Clear form
+        const form = document.getElementById('modal-form');
+        if (form) {
+            form.reset();
+        }
+    }
+
+    // Generate form fields for a section
+    generateFormFields(section) {
+        const fields = this.getFieldsConfig(section);
+        return fields.map(field => {
+            if (field.type === 'select') {
+                return this.createSelectField(field);
+            } else if (field.type === 'checkbox') {
+                return this.createCheckboxField(field);
+            } else if (field.type === 'textarea') {
+                return this.createTextareaField(field);
+            } else {
+                return this.createInputField(field);
+            }
+        }).join('');
+    }
+
+    // Get fields configuration for each section
+    getFieldsConfig(section) {
+        const configs = {
+            users: [
+                { name: 'email', label: 'Email', type: 'email', required: true },
+                { name: 'username', label: 'Username', type: 'text', required: true },
+                { name: 'display_name', label: 'Display Name', type: 'text' },
+                { name: 'avatar_file', label: 'Avatar Image', type: 'file', accept: 'image/*' }
+            ],
+            artists: [
+                { name: 'name', label: 'Name', type: 'text', required: true },
+                { name: 'bio', label: 'Bio', type: 'textarea' },
+                { name: 'image_file', label: 'Artist Image', type: 'file', accept: 'image/*' },
+                { name: 'background_file', label: 'Background Image', type: 'file', accept: 'image/*' },
+                { name: 'monthly_listeners', label: 'Monthly Listeners', type: 'number' },
+                { name: 'is_verified', label: 'Verified Artist', type: 'checkbox' }
+            ],
+            albums: [
+                { name: 'title', label: 'Title', type: 'text', required: true },
+                { name: 'description', label: 'Description', type: 'textarea' },
+                { name: 'cover_file', label: 'Cover Image', type: 'file', accept: 'image/*' },
+                { name: 'release_date', label: 'Release Date', type: 'date', required: true },
+                { name: 'artist_id', label: 'Artist', type: 'select', required: true, options: 'artists' }
+            ],
+            tracks: [
+                { name: 'title', label: 'Title', type: 'text', required: true },
+                { name: 'duration', label: 'Duration (seconds)', type: 'number', required: true },
+                { name: 'audio_file', label: 'Audio File', type: 'file', accept: 'audio/*', required: true },
+                { name: 'image_file', label: 'Track Image', type: 'file', accept: 'image/*' },
+                { name: 'artist_id', label: 'Artist', type: 'select', required: true, options: 'artists' },
+                { name: 'album_id', label: 'Album', type: 'select', options: 'albums' },
+                { name: 'track_number', label: 'Track Number', type: 'number' }
+            ],
+            playlists: [
+                { name: 'name', label: 'Name', type: 'text', required: true },
+                { name: 'description', label: 'Description', type: 'textarea' },
+                { name: 'cover_file', label: 'Cover Image', type: 'file', accept: 'image/*' },
+                { name: 'is_public', label: 'Public Playlist', type: 'checkbox' }
+            ]
+        };
+        return configs[section] || [];
+    }
+
+    // Create input field HTML
+    createInputField(field) {
+        if (field.type === 'file') {
+            return `
+                <div class="form-group">
+                    <label for="${field.name}">${field.label}${field.required ? ' *' : ''}</label>
+                    <input 
+                        type="file" 
+                        id="${field.name}" 
+                        name="${field.name}" 
+                        class="form-control"
+                        accept="${field.accept || '*'}"
+                        ${field.required ? 'required' : ''}
+                    />
+                    <div class="file-preview" id="${field.name}_preview" style="margin-top: 10px;"></div>
+                </div>
+            `;
+        }
+        
+        return `
+            <div class="form-group">
+                <label for="${field.name}">${field.label}${field.required ? ' *' : ''}</label>
+                <input 
+                    type="${field.type}" 
+                    id="${field.name}" 
+                    name="${field.name}" 
+                    class="form-control"
+                    ${field.required ? 'required' : ''}
+                />
+            </div>
+        `;
+    }
+
+    // Create textarea field HTML
+    createTextareaField(field) {
+        return `
+            <div class="form-group">
+                <label for="${field.name}">${field.label}${field.required ? ' *' : ''}</label>
+                <textarea 
+                    id="${field.name}" 
+                    name="${field.name}" 
+                    class="form-control"
+                    rows="3"
+                    ${field.required ? 'required' : ''}
+                ></textarea>
+            </div>
+        `;
+    }
+
+    // Create checkbox field HTML
+    createCheckboxField(field) {
+        return `
+            <div class="form-group">
+                <label>
+                    <input 
+                        type="checkbox" 
+                        id="${field.name}" 
+                        name="${field.name}"
+                    />
+                    ${field.label}
+                </label>
+            </div>
+        `;
+    }
+
+    // Create select field HTML
+    createSelectField(field) {
+        return `
+            <div class="form-group">
+                <label for="${field.name}">${field.label}${field.required ? ' *' : ''}</label>
+                <select 
+                    id="${field.name}" 
+                    name="${field.name}" 
+                    class="form-control"
+                    data-options="${field.options}"
+                    ${field.required ? 'required' : ''}
+                >
+                    <option value="">Select ${field.label}</option>
+                </select>
+            </div>
+        `;
+    }
+
+    // Format duration from seconds to MM:SS
+    formatDuration(seconds) {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    }
+
+    // Edit item
+    async editItem(section, id) {
+        console.log('editItem called:', section, id);
+        try {
+            await this.openModal('edit', id);
+        } catch (error) {
+            console.error('Error in editItem:', error);
+            this.showNotification('Error opening edit modal', 'error');
+        }
+    }
+
+    // Populate form with existing data
+    async populateForm(id) {
+        try {
+            let url = `${this.apiBase}/${this.currentSection}/${id}`;
+            if (this.currentSection === 'users') {
+                url = `${this.apiBase}/admin/users/${id}`;
+            }
+            
+            const response = await this.makeAuthenticatedRequest(url);
+            if (!response.ok) {
+                throw new Error('Failed to fetch item data');
+            }
+            
+            const result = await response.json();
+            const data = result.data || result;
+            
+            // Populate form fields
+            Object.keys(data).forEach(key => {
+                const field = document.getElementById(key);
+                if (field) {
+                    if (field.type === 'checkbox') {
+                        field.checked = data[key];
+                    } else if (field.type === 'date' && data[key]) {
+                        field.value = data[key].split('T')[0]; // Format date for input
+                    } else {
+                        field.value = data[key] || '';
+                    }
+                }
+            });
+            
+            // Handle select fields by loading options first
+            await this.loadSelectOptions();
+        } catch (error) {
+            console.error('Error populating form:', error);
+            this.showNotification('Error loading item data', 'error');
+        }
+    }
+
+    // Load options for select fields
+    async loadSelectOptions() {
+        const selects = document.querySelectorAll('select[data-options]');
+        for (const select of selects) {
+            const optionsType = select.dataset.options;
+            if (optionsType === 'artists') {
+                const artists = await this.fetchData('artists');
+                select.innerHTML = '<option value="">Select Artist</option>';
+                artists.forEach(artist => {
+                    const option = document.createElement('option');
+                    option.value = artist.id;
+                    option.textContent = artist.name;
+                    select.appendChild(option);
+                });
+            } else if (optionsType === 'albums') {
+                const albums = await this.fetchData('albums');
+                select.innerHTML = '<option value="">Select Album</option>';
+                albums.forEach(album => {
+                    const option = document.createElement('option');
+                    option.value = album.id;
+                    option.textContent = album.title;
+                    select.appendChild(option);
+                });
+            }
+        }
+    }
+
+    // Setup file input change listeners and preview
+    setupFileInputs() {
+        const fileInputs = document.querySelectorAll('input[type="file"]');
+        fileInputs.forEach(input => {
+            input.addEventListener('change', (e) => {
+                this.previewFile(e.target);
+            });
+        });
+    }
+
+    // Preview uploaded file
+    previewFile(input) {
+        const file = input.files[0];
+        const preview = document.getElementById(`${input.name}_preview`);
+        
+        if (!file || !preview) return;
+        
+        if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                preview.innerHTML = `
+                    <img src="${e.target.result}" 
+                         style="max-width: 100px; max-height: 100px; border-radius: 5px; border: 1px solid #ddd;" 
+                         alt="Preview">
+                    <p style="margin-top: 5px; font-size: 0.8rem; color: #666;">${file.name}</p>
+                `;
+            };
+            reader.readAsDataURL(file);
+        } else if (file.type.startsWith('audio/')) {
+            preview.innerHTML = `
+                <div style="padding: 10px; background: #f5f5f5; border-radius: 5px; border: 1px solid #ddd;">
+                    <i class="fas fa-music" style="margin-right: 5px;"></i>
+                    <span>${file.name}</span>
+                    <audio controls style="width: 100%; margin-top: 5px;">
+                        <source src="${URL.createObjectURL(file)}" type="${file.type}">
+                    </audio>
+                </div>
+            `;
+        } else {
+            preview.innerHTML = `
+                <div style="padding: 10px; background: #f5f5f5; border-radius: 5px; border: 1px solid #ddd;">
+                    <i class="fas fa-file" style="margin-right: 5px;"></i>
+                    <span>${file.name}</span>
+                </div>
+            `;
+        }
+    }
+
+    // Upload file to server with authentication
+    async uploadFile(file, type = 'image', fieldName = null) {
+        const formData = new FormData();
+        
+        // Determine the correct endpoint and field name based on type and field
+        let endpoint;
+        let fieldKey;
+        
+        if (fieldName === 'avatar_file' || type === 'avatar') {
+            // Use avatar upload endpoint for user avatars
+            endpoint = `${this.apiBase}/upload/avatar`;
+            fieldKey = 'avatar';
+        } else if (type === 'audio') {
+            // For audio files, we might need a different endpoint in the future
+            endpoint = `${this.apiBase}/upload/images`;
+            fieldKey = 'images';
+        } else {
+            // Use generic images endpoint for other images
+            endpoint = `${this.apiBase}/upload/images`;
+            fieldKey = 'images';
+        }
+        
+        formData.append(fieldKey, file);
+        
+        try {
+            const response = await this.makeAuthenticatedRequest(endpoint, {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error?.message || 'Upload failed');
+            }
+            
+            const result = await response.json();
+            console.log('Upload result:', result);
+            
+            // Handle different response structures
+            if (fieldKey === 'avatar') {
+                // Avatar upload response: { file: { url, filename, size } }
+                return result.file?.url || result.file?.filename;
+            } else {
+                // Generic images upload response: { data: [{ url, filename }] }
+                if (result.data && Array.isArray(result.data) && result.data.length > 0) {
+                    return result.data[0].url || result.data[0].filename;
+                }
+                return result.data?.url || result.file?.url || result.url || result.filename;
+            }
+        } catch (error) {
+            console.error('Error uploading file:', error);
+            throw error;
+        }
+    }
+
+    // Delete item
+    async deleteItem(section, id) {
+        console.log('deleteItem called:', section, id);
+        if (!confirm('Are you sure you want to delete this item?')) {
+            return;
+        }
+
+        this.showLoading();
+        try {
+            let url = `${this.apiBase}/${section}/${id}`;
+            if (section === 'users') {
+                url = `${this.apiBase}/admin/users/${id}`;
+            }
+
+            const response = await this.makeAuthenticatedRequest(url, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                this.showNotification('Item deleted successfully', 'success');
+                this.loadSectionData(section);
+                this.loadDashboard(); // Update stats
+            } else {
+                throw new Error('Delete failed');
+            }
+        } catch (error) {
+            console.error('Error deleting item:', error);
+            this.showNotification('Error deleting item', 'error');
+        }
+        this.hideLoading();
+    }
+
+    // Handle form submission
+    async handleSubmit() {
+        const form = document.getElementById('modal-form');
+        const formData = new FormData(form);
+        const data = {};
+
+        this.showLoading();
+        
+        try {
+            // Handle file uploads first
+            const fileInputs = form.querySelectorAll('input[type="file"]');
+            for (const input of fileInputs) {
+                if (input.files && input.files[0]) {
+                    const file = input.files[0];
+                    let uploadType = 'image';
+                    
+                    // Determine upload type based on field name
+                    if (input.name.includes('audio')) {
+                        uploadType = 'audio';
+                    } else if (input.name === 'avatar_file') {
+                        uploadType = 'avatar';
+                    } else if (input.name.includes('image') || input.name.includes('cover') || input.name.includes('background')) {
+                        uploadType = 'image';
+                    }
+                    
+                    try {
+                        const uploadedUrl = await this.uploadFile(file, uploadType, input.name);
+                        
+                        // Map file field names to URL field names
+                        const fieldMapping = {
+                            'avatar_file': 'avatar_url',
+                            'image_file': 'image_url',
+                            'background_file': 'background_image_url',
+                            'cover_file': 'cover_image_url',
+                            'audio_file': 'audio_url'
+                        };
+                        
+                        const urlFieldName = fieldMapping[input.name] || input.name.replace('_file', '_url');
+                        data[urlFieldName] = uploadedUrl;
+                    } catch (uploadError) {
+                        console.error('Error uploading file:', uploadError);
+                        this.showNotification(`Error uploading ${input.files[0].name}`, 'error');
+                        this.hideLoading();
+                        return;
+                    }
+                }
+            }
+
+            // Handle other form fields
+            for (const [key, value] of formData.entries()) {
+                if (!key.endsWith('_file') && value !== '') {
+                    data[key] = value;
+                }
+            }
+
+            // Handle checkboxes
+            const checkboxes = form.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                data[checkbox.name] = checkbox.checked;
+            });
+
+            const method = this.currentEditId ? 'PUT' : 'POST';
+            let url;
+            
+            if (this.currentSection === 'users') {
+                url = this.currentEditId ? 
+                    `${this.apiBase}/admin/users/${this.currentEditId}` :
+                    `${this.apiBase}/admin/users`;
+            } else {
+                url = this.currentEditId ? 
+                    `${this.apiBase}/${this.currentSection}/${this.currentEditId}` :
+                    `${this.apiBase}/${this.currentSection}`;
+            }
+
+            const response = await this.makeAuthenticatedRequest(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (response.ok) {
+                this.showNotification(
+                    `${this.currentSection.slice(0, -1)} ${this.currentEditId ? 'updated' : 'created'} successfully`, 
+                    'success'
+                );
+                this.closeModal();
+                this.loadSectionData(this.currentSection);
+                this.loadDashboard(); // Update stats
+            } else {
+                const errorData = await response.json();
+                
+                // Handle validation errors in admin forms
+                if (errorData.error?.code === 'VALIDATION_ERROR' && errorData.error?.details) {
+                    this.showValidationErrorsInForm(errorData.error.details);
+                    throw new Error('Validation failed');
+                } else {
+                    throw new Error(errorData.error?.message || 'Save failed');
+                }
+            }
+        } catch (error) {
+            console.error('Error saving item:', error);
+            
+            // Try to parse error response for validation details
+            if (error.message && error.message.includes('Save failed')) {
+                // This might be a validation error, try to get more details
+                this.showNotification('Vui lòng kiểm tra lại thông tin đã nhập', 'error');
+            } else {
+                this.showNotification(error.message || 'Error saving item', 'error');
+            }
+        }
+        this.hideLoading();
+    }
+
+    // Show loading spinner
+    showLoading() {
+        document.getElementById('loading').classList.add('show');
+    }
+
+    // Hide loading spinner
+    hideLoading() {
+        document.getElementById('loading').classList.remove('show');
+    }
+
+    // Show notification
+    showNotification(message, type = 'info') {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        notification.innerHTML = `
+            <div class="notification-content">
+                <span>${message}</span>
+                <button class="notification-close">&times;</button>
+            </div>
+        `;
+
+        // Add to page
+        document.body.appendChild(notification);
+
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            notification.remove();
+        }, 5000);
+
+        // Remove on click
+        notification.querySelector('.notification-close').addEventListener('click', () => {
+            notification.remove();
+        });
+    }
+
+    // Show validation errors in admin forms
+    showValidationErrorsInForm(validationDetails) {
+        let errorMessage = 'Vui lòng kiểm tra lại các trường sau:\n';
+        
+        validationDetails.forEach(detail => {
+            errorMessage += `• ${this.getFieldDisplayName(detail.field)}: ${detail.message}\n`;
+        });
+        
+        this.showNotification(errorMessage.replace(/\n/g, '<br>'), 'error');
+    }
+
+    // Get display name for fields
+    getFieldDisplayName(fieldName) {
+        const fieldNames = {
+            'email': 'Email',
+            'username': 'Username', 
+            'password': 'Password',
+            'display_name': 'Display Name',
+            'name': 'Name',
+            'title': 'Title',
+            'bio': 'Bio',
+            'description': 'Description',
+            'release_date': 'Release Date',
+            'duration': 'Duration',
+            'artist_id': 'Artist',
+            'album_id': 'Album',
+            'track_number': 'Track Number',
+            'monthly_listeners': 'Monthly Listeners',
+            'is_verified': 'Verified Status',
+            'is_public': 'Public Status'
+        };
+        
+        return fieldNames[fieldName] || fieldName;
+    }
+}
+
+// Initialize admin dashboard when page loads
+window.admin = new AdminDashboard();
+
+// Add notification styles to head
+const notificationStyles = `
+<style>
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 4000;
+    max-width: 400px;
+    animation: slideInRight 0.3s ease;
+}
+
+.notification-content {
+    background: white;
+    border-radius: 5px;
+    padding: 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 4px solid #007bff;
+}
+
+.notification-success .notification-content {
+    border-left-color: #28a745;
+}
+
+.notification-error .notification-content {
+    border-left-color: #dc3545;
+}
+
+.notification-close {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: #999;
+    margin-left: 1rem;
+}
+
+@keyframes slideInRight {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+}
+</style>
+`;
+
+document.head.insertAdjacentHTML('beforeend', notificationStyles); 

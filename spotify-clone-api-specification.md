@@ -1085,7 +1085,7 @@ CREATE TABLE users (
 
 ### **Environment Variables**
 ```env
-DATABASE_URL=postgresql://user:pass@localhost:5432/spotify_clone
+DATAAPP_URL=postgresql://user:pass@localhost:5432/spotify_clone
 JWT_SECRET=your-jwt-secret-key
 JWT_EXPIRE=1h
 REFRESH_TOKEN_EXPIRE=30d
