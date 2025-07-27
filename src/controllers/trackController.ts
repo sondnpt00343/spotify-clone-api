@@ -349,6 +349,7 @@ export class TrackController {
   // POST /api/tracks (admin only)
   static async createTrack(req: Request, res: Response, next: NextFunction) {
     try {
+      console.log('Track creation request body:', req.body);
       const { title, duration, audio_url, image_url, album_id, artist_id, track_number } = req.body;
 
       // Validate required fields
@@ -384,7 +385,8 @@ export class TrackController {
   static async updateTrack(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      const { title, duration, audio_url, image_url, album_id, track_number } = req.body;
+      console.log('Track update request body:', req.body);
+      const { title, duration, audio_url, image_url, album_id, artist_id, track_number } = req.body;
 
       if (!id) {
         const error: CustomError = new Error('Track ID is required');
@@ -409,6 +411,7 @@ export class TrackController {
         audio_url,
         image_url,
         album_id,
+        artist_id,
         track_number
       });
 

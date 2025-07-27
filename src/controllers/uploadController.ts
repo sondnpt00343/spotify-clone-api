@@ -6,6 +6,7 @@ import { processUploadedFile, generateFileUrl, deleteFile, pathToUrl } from '../
 import { UserModel } from '../models/User';
 import { ArtistModel } from '../models/Artist';
 import { AlbumModel } from '../models/Album';
+import { TrackModel } from '../models/Track';
 import { PlaylistModel } from '../models/Playlist';
 
 export class UploadController {
@@ -99,6 +100,68 @@ export class UploadController {
 
       res.status(200).json({
         message: 'Artist image uploaded successfully',
+        artist_id: artistId,
+        file: {
+          filename: fileResult.filename,
+          url: fileResult.url, // Return path only (not full URL)
+          size: fileResult.size
+        }
+      });
+    } catch (error) {
+      // Clean up uploaded file on error
+      if (req.file && req.file.path) {
+        await deleteFile(req.file.path).catch(() => {});
+      }
+      next(error);
+    }
+  }
+
+  // Upload artist background image
+  static async uploadArtistBackground(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { artistId } = req.params;
+      const userId = req.user?.userId;
+
+      if (!userId) {
+        const error: CustomError = new Error('User not authenticated');
+        error.statusCode = 401;
+        error.code = 'NOT_AUTHENTICATED';
+        throw error;
+      }
+
+      if (!artistId) {
+        const error: CustomError = new Error('Artist ID is required');
+        error.statusCode = 400;
+        error.code = 'MISSING_ARTIST_ID';
+        throw error;
+      }
+
+      if (!req.file) {
+        const error: CustomError = new Error('No file uploaded');
+        error.statusCode = 400;
+        error.code = 'NO_FILE_UPLOADED';
+        throw error;
+      }
+
+      // Verify artist exists
+      const artist = await ArtistModel.findById(artistId);
+      if (!artist) {
+        const error: CustomError = new Error('Artist not found');
+        error.statusCode = 404;
+        error.code = 'ARTIST_NOT_FOUND';
+        throw error;
+      }
+
+      // Process uploaded file
+      const fileResult = await processUploadedFile(req.file, 'image');
+
+      // Update artist background image path in database (store path, not full URL)
+      await ArtistModel.update(artistId, {
+        background_image_url: fileResult.url // This is now a path
+      });
+
+      res.status(200).json({
+        message: 'Artist background image uploaded successfully',
         artist_id: artistId,
         file: {
           filename: fileResult.filename,
@@ -247,6 +310,68 @@ export class UploadController {
     }
   }
 
+  // Upload track image (admin only)
+  static async uploadTrackImage(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { trackId } = req.params;
+      const userId = req.user?.userId;
+
+      if (!userId) {
+        const error: CustomError = new Error('User not authenticated');
+        error.statusCode = 401;
+        error.code = 'NOT_AUTHENTICATED';
+        throw error;
+      }
+
+      if (!trackId) {
+        const error: CustomError = new Error('Track ID is required');
+        error.statusCode = 400;
+        error.code = 'MISSING_TRACK_ID';
+        throw error;
+      }
+
+      if (!req.file) {
+        const error: CustomError = new Error('No file uploaded');
+        error.statusCode = 400;
+        error.code = 'NO_FILE_UPLOADED';
+        throw error;
+      }
+
+      // Verify track exists
+      const track = await TrackModel.findById(trackId);
+      if (!track) {
+        const error: CustomError = new Error('Track not found');
+        error.statusCode = 404;
+        error.code = 'TRACK_NOT_FOUND';
+        throw error;
+      }
+
+      // Process uploaded file
+      const fileResult = await processUploadedFile(req.file, 'image');
+
+      // Update track image path in database (store path, not full URL)
+      await TrackModel.update(trackId, {
+        image_url: fileResult.url // This is now a path
+      });
+
+      res.status(200).json({
+        message: 'Track image uploaded successfully',
+        track_id: trackId,
+        file: {
+          filename: fileResult.filename,
+          url: fileResult.url, // Return path only (not full URL)
+          size: fileResult.size
+        }
+      });
+    } catch (error) {
+      // Clean up uploaded file on error
+      if (req.file && req.file.path) {
+        await deleteFile(req.file.path).catch(() => {});
+      }
+      next(error);
+    }
+  }
+
   // Upload track audio file (admin only)
   static async uploadTrackAudio(req: Request, res: Response, next: NextFunction) {
     try {
@@ -280,8 +405,20 @@ export class UploadController {
       // Process uploaded file
       const fileResult = await processUploadedFile(req.file, 'audio');
 
-      // TODO: Extract audio metadata (duration, bitrate, etc.)
-      // For now, we'll update the track with the audio URL
+      // Update track with new audio URL and duration if available
+      const updateData: any = {
+        audio_url: fileResult.url
+      };
+      
+      // Add duration if extracted from metadata
+      if (fileResult.metadata?.duration) {
+        updateData.duration = fileResult.metadata.duration;
+        console.log(`Auto-updating track duration to ${fileResult.metadata.duration} seconds`);
+      }
+
+      await TrackModel.update(trackId, updateData);
+
+      console.log('Track updated with:', updateData);
 
       res.status(200).json({
         message: 'Track audio uploaded successfully',

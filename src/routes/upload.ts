@@ -228,6 +228,86 @@ router.post('/artist/:artistId/image',
 
 /**
  * @swagger
+ * /api/upload/artist/{artistId}/background:
+ *   post:
+ *     summary: Upload artist background image (Admin only)
+ *     tags: [Upload]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: artistId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Artist ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               background:
+ *                 type: string
+ *                 format: binary
+ *                 description: Artist background image file (JPEG, PNG, GIF, WebP, max 15MB)
+ *     responses:
+ *       200:
+ *         description: Artist background image uploaded successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/FileUploadResponse'
+ *       400:
+ *         description: No file uploaded or invalid file type
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Admin access required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Artist not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       413:
+ *         description: File too large (max 15MB)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       429:
+ *         description: Too many upload requests
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+// Artist background image upload (admin only)
+// POST /api/upload/artist/:artistId/background
+router.post('/artist/:artistId/background',
+  authenticateToken,
+  uploadLimiter,
+  uploadCover.single('background'),
+  UploadController.uploadArtistBackground
+);
+
+/**
+ * @swagger
  * /api/upload/album/{albumId}/cover:
  *   post:
  *     summary: Upload album cover (Admin only)
@@ -464,6 +544,86 @@ router.post('/track/:trackId/audio',
   uploadLimiter,
   uploadAudio.single('audio'),
   UploadController.uploadTrackAudio
+);
+
+/**
+ * @swagger
+ * /api/upload/track/{trackId}/image:
+ *   post:
+ *     summary: Upload track image (Admin only)
+ *     tags: [Upload]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: trackId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Track ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *                 description: Track image file (JPEG, PNG, GIF, WebP, max 15MB)
+ *     responses:
+ *       200:
+ *         description: Track image uploaded successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/FileUploadResponse'
+ *       400:
+ *         description: No file uploaded or invalid file type
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Admin access required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Track not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       413:
+ *         description: File too large (max 15MB)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       429:
+ *         description: Too many upload requests
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+// Track image upload (admin only)
+// POST /api/upload/track/:trackId/image
+router.post('/track/:trackId/image',
+  authenticateToken,
+  uploadLimiter,
+  uploadCover.single('image'),
+  UploadController.uploadTrackImage
 );
 
 /**

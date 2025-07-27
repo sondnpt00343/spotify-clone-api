@@ -1,0 +1,180 @@
+### Track Operations Test File
+### Make sure to set these variables first:
+# @baseUrl = http://localhost:3000
+# @accessToken = your-admin-access-token
+# @trackId = track-id-for-testing
+# @artistId = artist-id-for-testing
+
+### 1. Create new track
+POST {{baseUrl}}/api/tracks
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "title": "Test Track",
+  "duration": 180,
+  "audio_url": "/uploads/audio/test_audio.mp3",
+  "image_url": "/uploads/images/test_image.jpg",
+  "artist_id": "{{artistId}}",
+  "track_number": 1
+}
+
+### 2. Get track by ID
+GET {{baseUrl}}/api/tracks/{{trackId}}
+
+### 3. Update track (all fields)
+PUT {{baseUrl}}/api/tracks/{{trackId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "title": "Updated Test Track",
+  "duration": 200,
+  "image_url": "/uploads/images/new_test_image.jpg",
+  "track_number": 2
+}
+
+### 4. Update track (partial - only title)
+PUT {{baseUrl}}/api/tracks/{{trackId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "title": "Partially Updated Track"
+}
+
+### 5. Upload track image (requires multipart form)
+POST {{baseUrl}}/api/upload/track/{{trackId}}/image
+Authorization: Bearer {{accessToken}}
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="image"; filename="track_image.jpg"
+Content-Type: image/jpeg
+
+[Binary image data would go here]
+--boundary--
+
+### 6. Upload track audio (requires multipart form)
+POST {{baseUrl}}/api/upload/track/{{trackId}}/audio
+Authorization: Bearer {{accessToken}}
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="audio"; filename="track_audio.mp3"
+Content-Type: audio/mpeg
+
+[Binary audio data would go here]
+--boundary--
+
+### 7. Get all tracks (with pagination)
+GET {{baseUrl}}/api/tracks?limit=10&offset=0
+
+### 8. Search tracks
+GET {{baseUrl}}/api/tracks?search=test&limit=5
+
+### 9. Get tracks by artist
+GET {{baseUrl}}/api/tracks?artist_id={{artistId}}
+
+### 10. Delete track
+DELETE {{baseUrl}}/api/tracks/{{trackId}}
+Authorization: Bearer {{accessToken}}
+
+### Test URLs for debugging
+GET {{baseUrl}}/api/artists
+GET {{baseUrl}}/api/albums
+
+### Test generic image upload (fallback)
+POST {{baseUrl}}/api/upload/images
+Authorization: Bearer {{accessToken}}
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="images"; filename="generic_image.jpg"
+Content-Type: image/jpeg
+
+[Binary image data would go here]
+--boundary--
+
+### Admin endpoints for testing
+GET {{baseUrl}}/api/admin/users
+Authorization: Bearer {{accessToken}}
+
+### Test track creation with minimal fields
+POST {{baseUrl}}/api/tracks
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "title": "Minimal Track",
+  "duration": 120,
+  "audio_url": "/uploads/audio/minimal_audio.mp3",
+  "artist_id": "{{artistId}}"
+}
+
+### Test track creation with all optional fields
+POST {{baseUrl}}/api/tracks
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "title": "Full Track",
+  "duration": 240,
+  "audio_url": "/uploads/audio/full_audio.mp3",
+  "image_url": "/uploads/images/full_image.jpg",
+  "artist_id": "{{artistId}}",
+  "album_id": "album-id-if-available",
+  "track_number": 5
+}
+
+### Test track update without required fields (should work for partial updates)
+PUT {{baseUrl}}/api/tracks/{{trackId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "duration": 300
+}
+
+### Verify file serving
+GET {{baseUrl}}/uploads/images/test_image.jpg
+GET {{baseUrl}}/uploads/audio/test_audio.mp3
+
+### Test error cases
+
+### Track not found
+GET {{baseUrl}}/api/tracks/non-existent-id
+
+### Unauthorized track creation
+POST {{baseUrl}}/api/tracks
+Content-Type: application/json
+
+{
+  "title": "Unauthorized Track",
+  "duration": 180,
+  "audio_url": "/uploads/audio/test_audio.mp3",
+  "artist_id": "{{artistId}}"
+}
+
+### Invalid track data
+POST {{baseUrl}}/api/tracks
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "title": "",
+  "duration": -1,
+  "artist_id": ""
+}
+
+### Upload to non-existent track
+POST {{baseUrl}}/api/upload/track/non-existent-id/image
+Authorization: Bearer {{accessToken}}
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="image"; filename="test.jpg"
+Content-Type: image/jpeg
+
+[Binary data]
+--boundary-- 

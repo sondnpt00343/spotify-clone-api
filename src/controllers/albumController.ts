@@ -356,7 +356,8 @@ export class AlbumController {
   static async updateAlbum(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      const { title, description, cover_image_url, release_date } = req.body;
+      console.log('Album update request body:', req.body);
+      const { title, description, cover_image_url, release_date, artist_id } = req.body;
 
       if (!id) {
         const error: CustomError = new Error('Album ID is required');
@@ -379,7 +380,8 @@ export class AlbumController {
         title,
         description,
         cover_image_url,
-        release_date
+        release_date,
+        artist_id
       });
 
       res.status(200).json({

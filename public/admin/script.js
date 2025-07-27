@@ -4,6 +4,8 @@ class AdminDashboard {
         this.currentSection = 'dashboard';
         this.currentEditId = null;
         this.apiBase = '/api';
+        this.originalFileUrls = {}; // Track original file URLs for edit mode
+        this.hasNewFiles = {}; // Track which files have been changed
         
         // Check authentication first
         if (!this.checkAuth()) {
@@ -514,7 +516,7 @@ class AdminDashboard {
             `Add New ${this.currentSection.slice(0, -1)}` : 
             `Edit ${this.currentSection.slice(0, -1)}`;
 
-        formFields.innerHTML = this.generateFormFields(this.currentSection);
+        formFields.innerHTML = this.generateFormFields(this.currentSection, mode);
         
         // Load select options first
         await this.loadSelectOptions();
@@ -524,6 +526,10 @@ class AdminDashboard {
         
         if (mode === 'edit' && itemId) {
             await this.populateForm(itemId);
+        } else {
+            // Reset file tracking for add mode
+            this.originalFileUrls = {};
+            this.hasNewFiles = {};
         }
 
         modal.classList.add('show');
@@ -542,12 +548,27 @@ class AdminDashboard {
         if (form) {
             form.reset();
         }
+        
+        // Reset file tracking
+        this.originalFileUrls = {};
+        this.hasNewFiles = {};
+        
+        // Clear all file previews
+        const previews = document.querySelectorAll('[id$="_preview"]');
+        previews.forEach(preview => {
+            preview.innerHTML = '';
+        });
     }
 
     // Generate form fields for a section
-    generateFormFields(section) {
+    generateFormFields(section, mode = 'add') {
         const fields = this.getFieldsConfig(section);
         return fields.map(field => {
+            // Make audio file optional for edit mode (since existing tracks already have audio)
+            if (field.type === 'file' && field.name === 'audio_file' && mode === 'edit') {
+                field = { ...field, required: false };
+            }
+            
             if (field.type === 'select') {
                 return this.createSelectField(field);
             } else if (field.type === 'checkbox') {
@@ -720,6 +741,10 @@ class AdminDashboard {
             const result = await response.json();
             const data = result.data || result;
             
+            // Reset file tracking for edit mode
+            this.originalFileUrls = {};
+            this.hasNewFiles = {};
+            
             // Populate form fields
             Object.keys(data).forEach(key => {
                 const field = document.getElementById(key);
@@ -734,8 +759,70 @@ class AdminDashboard {
                 }
             });
             
+            // Disable email and username fields for user edit (admin restriction)
+            if (this.currentSection === 'users') {
+                const emailField = document.getElementById('email');
+                const usernameField = document.getElementById('username');
+                
+                if (emailField) {
+                    emailField.readOnly = true;
+                    emailField.style.backgroundColor = '#f8f9fa';
+                    emailField.style.cursor = 'not-allowed';
+                    emailField.title = 'Email cannot be changed for security reasons';
+                }
+                
+                if (usernameField) {
+                    usernameField.readOnly = true;
+                    usernameField.style.backgroundColor = '#f8f9fa';
+                    usernameField.style.cursor = 'not-allowed';
+                    usernameField.title = 'Username cannot be changed for security reasons';
+                }
+            }
+            
+            // Handle file URL fields - show existing file previews
+            const fileUrlMapping = {
+                'avatar_url': 'avatar_file',
+                'image_url': 'image_file', 
+                'background_image_url': 'background_file',
+                'cover_image_url': 'cover_file',
+                'audio_url': 'audio_file'
+            };
+            
+            Object.keys(fileUrlMapping).forEach(urlField => {
+                const fileInputName = fileUrlMapping[urlField];
+                const fileUrl = data[urlField];
+                
+                if (fileUrl) {
+                    // Store original URL
+                    this.originalFileUrls[fileInputName] = fileUrl;
+                    this.hasNewFiles[fileInputName] = false;
+                    
+                    // Show existing file preview
+                    this.showExistingFilePreview(fileInputName, fileUrl);
+                }
+            });
+            
             // Handle select fields by loading options first
             await this.loadSelectOptions();
+            
+            // Set select field values after options are loaded
+            // Handle artist_id first, then album_id for dependency
+            if (data.artist_id) {
+                const artistField = document.getElementById('artist_id');
+                if (artistField) {
+                    artistField.value = data.artist_id;
+                    // Update album options based on selected artist
+                    await this.updateAlbumOptions(data.artist_id);
+                }
+            }
+            
+            // Then set other select values including album_id
+            Object.keys(data).forEach(key => {
+                const field = document.getElementById(key);
+                if (field && field.tagName === 'SELECT') {
+                    field.value = data[key] || '';
+                }
+            });
         } catch (error) {
             console.error('Error populating form:', error);
             this.showNotification('Error loading item data', 'error');
@@ -756,17 +843,45 @@ class AdminDashboard {
                     option.textContent = artist.name;
                     select.appendChild(option);
                 });
+                
+                // Add change listener for artist select to update album options
+                if (select.id === 'artist_id') {
+                    select.addEventListener('change', () => {
+                        this.updateAlbumOptions(select.value);
+                    });
+                }
             } else if (optionsType === 'albums') {
+                // Load all albums initially, will be filtered by artist
                 const albums = await this.fetchData('albums');
-                select.innerHTML = '<option value="">Select Album</option>';
-                albums.forEach(album => {
-                    const option = document.createElement('option');
-                    option.value = album.id;
-                    option.textContent = album.title;
-                    select.appendChild(option);
-                });
+                this.allAlbums = albums; // Store for filtering
+                this.updateAlbumOptions(null); // Initial load with no filter
             }
         }
+    }
+    
+    // Update album options based on selected artist
+    async updateAlbumOptions(artistId) {
+        const albumSelect = document.getElementById('album_id');
+        if (!albumSelect) return;
+        
+        // Ensure we have albums data
+        if (!this.allAlbums) {
+            this.allAlbums = await this.fetchData('albums');
+        }
+        
+        albumSelect.innerHTML = '<option value="">Select Album</option>';
+        
+        // Filter albums by artist if artistId is provided
+        const filteredAlbums = artistId ? 
+            this.allAlbums.filter(album => album.artist_id === artistId) :
+            this.allAlbums;
+        
+        filteredAlbums.forEach(album => {
+            const option = document.createElement('option');
+            option.value = album.id;
+            option.textContent = `${album.title}${album.artist_name ? ` - ${album.artist_name}` : ''}`;
+            albumSelect.appendChild(option);
+        });
     }
 
     // Setup file input change listeners and preview
@@ -779,6 +894,63 @@ class AdminDashboard {
         });
     }
 
+    // Show existing file preview from URL
+    showExistingFilePreview(inputName, fileUrl) {
+        const preview = document.getElementById(`${inputName}_preview`);
+        if (!preview) return;
+        
+        // Convert relative path to full URL if needed
+        const fullUrl = this.convertToFullUrl(fileUrl);
+        
+        if (this.isImageFile(fileUrl)) {
+            preview.innerHTML = `
+                <div class="existing-file-preview">
+                    <img src="${fullUrl}" 
+                         style="max-width: 100px; max-height: 100px; border-radius: 5px; border: 1px solid #ddd;" 
+                         alt="Current file" onerror="this.style.display='none'">
+                    <p style="margin-top: 5px; font-size: 0.8rem; color: #666;">
+                        <i class="fas fa-image" style="margin-right: 5px;"></i>
+                        Current image
+                    </p>
+                    <button type="button" class="btn btn-sm btn-outline" onclick="adminDashboard.clearFileSelection('${inputName}')" 
+                            style="margin-top: 5px; padding: 2px 8px; font-size: 0.7rem;">
+                        <i class="fas fa-times"></i> Change
+                    </button>
+                </div>
+            `;
+        } else if (this.isAudioFile(fileUrl)) {
+            preview.innerHTML = `
+                <div class="existing-file-preview" style="padding: 10px; background: #f5f5f5; border-radius: 5px; border: 1px solid #ddd;">
+                    <p style="margin: 0 0 5px 0; font-size: 0.8rem; color: #666;">
+                        <i class="fas fa-music" style="margin-right: 5px;"></i>
+                        Current audio file
+                    </p>
+                    <audio controls style="width: 100%; margin-bottom: 5px;">
+                        <source src="${fullUrl}" type="audio/mpeg">
+                        Your browser does not support the audio element.
+                    </audio>
+                    <button type="button" class="btn btn-sm btn-outline" onclick="adminDashboard.clearFileSelection('${inputName}')" 
+                            style="padding: 2px 8px; font-size: 0.7rem;">
+                        <i class="fas fa-times"></i> Change
+                    </button>
+                </div>
+            `;
+        } else {
+            preview.innerHTML = `
+                <div class="existing-file-preview" style="padding: 10px; background: #f5f5f5; border-radius: 5px; border: 1px solid #ddd;">
+                    <p style="margin: 0 0 5px 0; font-size: 0.8rem; color: #666;">
+                        <i class="fas fa-file" style="margin-right: 5px;"></i>
+                        Current file
+                    </p>
+                    <button type="button" class="btn btn-sm btn-outline" onclick="adminDashboard.clearFileSelection('${inputName}')" 
+                            style="padding: 2px 8px; font-size: 0.7rem;">
+                        <i class="fas fa-times"></i> Change
+                    </button>
+                </div>
+            `;
+        }
+    }
+
     // Preview uploaded file
     previewFile(input) {
         const file = input.files[0];
@@ -786,34 +958,103 @@ class AdminDashboard {
         
         if (!file || !preview) return;
         
+        // Mark as having new file
+        this.hasNewFiles[input.name] = true;
+        
         if (file.type.startsWith('image/')) {
             const reader = new FileReader();
             reader.onload = (e) => {
                 preview.innerHTML = `
-                    <img src="${e.target.result}" 
-                         style="max-width: 100px; max-height: 100px; border-radius: 5px; border: 1px solid #ddd;" 
-                         alt="Preview">
-                    <p style="margin-top: 5px; font-size: 0.8rem; color: #666;">${file.name}</p>
+                    <div class="new-file-preview">
+                        <img src="${e.target.result}" 
+                             style="max-width: 100px; max-height: 100px; border-radius: 5px; border: 1px solid #ddd;" 
+                             alt="New file preview">
+                        <p style="margin-top: 5px; font-size: 0.8rem; color: #666;">
+                            <i class="fas fa-upload" style="margin-right: 5px; color: #1DB954;"></i>
+                            New: ${file.name}
+                        </p>
+                        <button type="button" class="btn btn-sm btn-outline" onclick="adminDashboard.clearFileSelection('${input.name}')" 
+                                style="margin-top: 5px; padding: 2px 8px; font-size: 0.7rem;">
+                            <i class="fas fa-undo"></i> Revert
+                        </button>
+                    </div>
                 `;
             };
             reader.readAsDataURL(file);
         } else if (file.type.startsWith('audio/')) {
             preview.innerHTML = `
-                <div style="padding: 10px; background: #f5f5f5; border-radius: 5px; border: 1px solid #ddd;">
-                    <i class="fas fa-music" style="margin-right: 5px;"></i>
-                    <span>${file.name}</span>
-                    <audio controls style="width: 100%; margin-top: 5px;">
+                <div class="new-file-preview" style="padding: 10px; background: #f0f8ff; border-radius: 5px; border: 1px solid #1DB954;">
+                    <p style="margin: 0 0 5px 0; font-size: 0.8rem; color: #666;">
+                        <i class="fas fa-upload" style="margin-right: 5px; color: #1DB954;"></i>
+                        New: ${file.name}
+                    </p>
+                    <audio controls style="width: 100%; margin-bottom: 5px;">
                         <source src="${URL.createObjectURL(file)}" type="${file.type}">
                     </audio>
+                    <button type="button" class="btn btn-sm btn-outline" onclick="adminDashboard.clearFileSelection('${input.name}')" 
+                            style="padding: 2px 8px; font-size: 0.7rem;">
+                        <i class="fas fa-undo"></i> Revert
+                    </button>
                 </div>
             `;
         } else {
             preview.innerHTML = `
-                <div style="padding: 10px; background: #f5f5f5; border-radius: 5px; border: 1px solid #ddd;">
-                    <i class="fas fa-file" style="margin-right: 5px;"></i>
-                    <span>${file.name}</span>
+                <div class="new-file-preview" style="padding: 10px; background: #f0f8ff; border-radius: 5px; border: 1px solid #1DB954;">
+                    <p style="margin: 0; font-size: 0.8rem; color: #666;">
+                        <i class="fas fa-upload" style="margin-right: 5px; color: #1DB954;"></i>
+                        New: ${file.name}
+                    </p>
+                    <button type="button" class="btn btn-sm btn-outline" onclick="adminDashboard.clearFileSelection('${input.name}')" 
+                            style="margin-top: 5px; padding: 2px 8px; font-size: 0.7rem;">
+                        <i class="fas fa-undo"></i> Revert
+                    </button>
                 </div>
             `;
+        }
+    }
+
+    // Utility functions for file handling
+    convertToFullUrl(url) {
+        if (!url) return '';
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+            return url;
+        }
+        // Handle relative URLs
+        const baseUrl = window.location.origin;
+        return url.startsWith('/') ? `${baseUrl}${url}` : `${baseUrl}/${url}`;
+    }
+
+    isImageFile(url) {
+        if (!url) return false;
+        const imageExtensions = /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i;
+        return imageExtensions.test(url);
+    }
+
+    isAudioFile(url) {
+        if (!url) return false;
+        const audioExtensions = /\.(mp3|wav|flac|m4a|aac|ogg)$/i;
+        return audioExtensions.test(url);
+    }
+
+    // Clear file selection and revert to original file
+    clearFileSelection(inputName) {
+        const fileInput = document.getElementById(inputName);
+        const preview = document.getElementById(`${inputName}_preview`);
+        
+        if (fileInput) {
+            fileInput.value = ''; // Clear the file input
+        }
+        
+        this.hasNewFiles[inputName] = false;
+        
+        // Show original file preview if exists
+        if (this.originalFileUrls[inputName]) {
+            this.showExistingFilePreview(inputName, this.originalFileUrls[inputName]);
+        } else {
+            // No original file, clear preview
+            if (preview) {
+                preview.innerHTML = '';
+            }
         }
     }
 
@@ -836,9 +1077,10 @@ class AdminDashboard {
             fieldKey = 'image';
             needsResourceId = true;
         } else if (fieldName === 'background_file' && this.currentSection === 'artists') {
-            // Artist background image - no specific endpoint, use generic
-            endpoint = `${this.apiBase}/upload/images`;
-            fieldKey = 'images';
+            // Artist background image upload - needs artist ID
+            endpoint = `${this.apiBase}/upload/artist/{resourceId}/background`;
+            fieldKey = 'background';
+            needsResourceId = true;
         } else if (fieldName === 'cover_file' && this.currentSection === 'albums') {
             // Album cover upload - needs album ID
             endpoint = `${this.apiBase}/upload/album/{resourceId}/cover`;
@@ -855,9 +1097,10 @@ class AdminDashboard {
             fieldKey = 'audio';
             needsResourceId = true;
         } else if (fieldName === 'image_file' && this.currentSection === 'tracks') {
-            // Track image - no specific endpoint, use generic
-            endpoint = `${this.apiBase}/upload/images`;
-            fieldKey = 'images';
+            // Track image upload - needs track ID
+            endpoint = `${this.apiBase}/upload/track/{resourceId}/image`;
+            fieldKey = 'image';
+            needsResourceId = true;
         } else {
             // Use generic images endpoint for other images (fallback)
             endpoint = `${this.apiBase}/upload/images`;
@@ -892,7 +1135,7 @@ class AdminDashboard {
             console.log('Upload result:', result);
             
             // Handle different response structures
-            if (fieldKey === 'avatar' || fieldKey === 'image' || fieldKey === 'cover' || fieldKey === 'audio') {
+            if (fieldKey === 'avatar' || fieldKey === 'image' || fieldKey === 'cover' || fieldKey === 'background' || fieldKey === 'audio') {
                 // Specific resource upload response: { file: { url, filename, size } }
                 return result.file?.url || result.file?.filename;
             } else {
@@ -949,10 +1192,11 @@ class AdminDashboard {
         this.showLoading();
         
         try {
-            // Handle file uploads first
+            // Handle file uploads first - only upload if there are new files
             const fileInputs = form.querySelectorAll('input[type="file"]');
             for (const input of fileInputs) {
-                if (input.files && input.files[0]) {
+                // Check if this input has a new file and should be uploaded
+                if (input.files && input.files[0] && this.hasNewFiles[input.name]) {
                     const file = input.files[0];
                     let uploadType = 'image';
                     
@@ -985,12 +1229,29 @@ class AdminDashboard {
                         this.hideLoading();
                         return;
                     }
+                } else if (!this.hasNewFiles[input.name] && this.originalFileUrls[input.name]) {
+                    // No new file, but we have an original URL - keep the original
+                    const fieldMapping = {
+                        'avatar_file': 'avatar_url',
+                        'image_file': 'image_url',
+                        'background_file': 'background_image_url',
+                        'cover_file': 'cover_image_url',
+                        'audio_file': 'audio_url'
+                    };
+                    
+                    const urlFieldName = fieldMapping[input.name] || input.name.replace('_file', '_url');
+                    data[urlFieldName] = this.originalFileUrls[input.name];
                 }
             }
 
             // Handle other form fields
             for (const [key, value] of formData.entries()) {
                 if (!key.endsWith('_file') && value !== '') {
+                    // Skip email and username for user updates (read-only fields)
+                    if (this.currentSection === 'users' && this.currentEditId && 
+                        (key === 'email' || key === 'username')) {
+                        continue;
+                    }
                     data[key] = value;
                 }
             }
@@ -1014,6 +1275,15 @@ class AdminDashboard {
                     `${this.apiBase}/${this.currentSection}`;
             }
 
+            // Debug logging for track and album operations
+            if (this.currentSection === 'tracks') {
+                console.log('Track form data being sent:', data);
+                console.log('Track operation:', method, url);
+            } else if (this.currentSection === 'albums') {
+                console.log('Album form data being sent:', data);
+                console.log('Album operation:', method, url);
+            }
+            
             const response = await this.makeAuthenticatedRequest(url, {
                 method: method,
                 headers: {
@@ -1127,8 +1397,7 @@ class AdminDashboard {
     }
 }
 
-// Initialize admin dashboard when page loads
-window.admin = new AdminDashboard();
+// AdminDashboard initialization moved to the end of file
 
 // Add notification styles to head
 const notificationStyles = `
@@ -1177,4 +1446,9 @@ const notificationStyles = `
 </style>
 `;
 
-document.head.insertAdjacentHTML('beforeend', notificationStyles); 
+document.head.insertAdjacentHTML('beforeend', notificationStyles);
+
+// Initialize the dashboard when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+    window.adminDashboard = new AdminDashboard();
+}); 

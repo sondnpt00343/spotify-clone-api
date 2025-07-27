@@ -38,6 +38,7 @@ export interface UpdateTrackData {
   audio_url?: string;
   image_url?: string;
   album_id?: string;
+  artist_id?: string;
   track_number?: number;
 }
 

@@ -33,13 +33,25 @@ export interface UpdateAlbumData {
   description?: string;
   cover_image_url?: string;
   release_date?: string;
+  artist_id?: string;
 }
 
 export class AlbumModel {
   // Find album by ID
   static async findById(id: string): Promise<Album | null> {
     const album = await db('albums').where({ id }).first();
-    return album || null;
+    if (!album) return null;
+
+    // Get total tracks count
+    const trackCount = await db('tracks')
+      .count('* as count')
+      .where('album_id', id)
+      .first();
+
+    return {
+      ...album,
+      total_tracks: parseInt(trackCount?.count as string) || 0
+    };
   }
 
   // Get album with artist details and stats
@@ -56,9 +68,10 @@ export class AlbumModel {
 
     if (!result) return null;
 
-    // Get total duration and play count from tracks
+    // Get track stats including count, total duration and play count
     const trackStats = await db('tracks')
       .select([
+        db.raw('COUNT(*) as total_tracks'),
         db.raw('SUM(duration) as total_duration'),
         db.raw('SUM(play_count) as play_count')
       ])
@@ -67,6 +80,7 @@ export class AlbumModel {
 
     return {
       ...result,
+      total_tracks: parseInt(trackStats?.total_tracks as string) || 0,
       total_duration: parseInt(trackStats?.total_duration as string) || 0,
       play_count: parseInt(trackStats?.play_count as string) || 0
     };
@@ -79,6 +93,7 @@ export class AlbumModel {
         'albums.*',
         'artists.name as artist_name',
         'artists.image_url as artist_image_url',
+        db.raw('COUNT(tracks.id) as total_tracks'),
         db.raw('SUM(tracks.duration) as total_duration'),
         db.raw('SUM(tracks.play_count) as play_count')
       ])
@@ -98,6 +113,7 @@ export class AlbumModel {
 
     return albums.map(album => ({
       ...album,
+      total_tracks: parseInt(album.total_tracks as string) || 0,
       total_duration: parseInt(album.total_duration as string) || 0,
       play_count: parseInt(album.play_count as string) || 0
     }));
@@ -115,6 +131,7 @@ export class AlbumModel {
         'albums.*',
         'artists.name as artist_name',
         'artists.image_url as artist_image_url',
+        db.raw('COUNT(tracks.id) as total_tracks'),
         db.raw('SUM(tracks.duration) as total_duration'),
         db.raw('SUM(tracks.play_count) as play_count')
       ])
@@ -128,6 +145,7 @@ export class AlbumModel {
 
     return albums.map(album => ({
       ...album,
+      total_tracks: parseInt(album.total_tracks as string) || 0,
       total_duration: parseInt(album.total_duration as string) || 0,
       play_count: parseInt(album.play_count as string) || 0
     }));
@@ -140,6 +158,7 @@ export class AlbumModel {
         'albums.*',
         'artists.name as artist_name',
         'artists.image_url as artist_image_url',
+        db.raw('COUNT(tracks.id) as total_tracks'),
         db.raw('SUM(tracks.duration) as total_duration'),
         db.raw('SUM(tracks.play_count) as play_count')
       ])
@@ -152,6 +171,7 @@ export class AlbumModel {
 
     return albums.map(album => ({
       ...album,
+      total_tracks: parseInt(album.total_tracks as string) || 0,
       total_duration: parseInt(album.total_duration as string) || 0,
       play_count: parseInt(album.play_count as string) || 0
     }));
@@ -164,6 +184,7 @@ export class AlbumModel {
         'albums.*',
         'artists.name as artist_name',
         'artists.image_url as artist_image_url',
+        db.raw('COUNT(tracks.id) as total_tracks'),
         db.raw('SUM(tracks.duration) as total_duration'),
         db.raw('SUM(tracks.play_count) as play_count')
       ])
@@ -176,6 +197,7 @@ export class AlbumModel {
 
     return albums.map(album => ({
       ...album,
+      total_tracks: parseInt(album.total_tracks as string) || 0,
       total_duration: parseInt(album.total_duration as string) || 0,
       play_count: parseInt(album.play_count as string) || 0
     }));
@@ -205,13 +227,15 @@ export class AlbumModel {
       cover_image_url: albumData.cover_image_url || null,
       release_date: albumData.release_date,
       artist_id: albumData.artist_id,
-      total_tracks: 0, // Will be updated when tracks are added
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
 
     await db('albums').insert(newAlbum);
-    return newAlbum as Album;
+    
+    // Return album with computed total_tracks
+    const createdAlbum = await this.findById(id);
+    return createdAlbum || { ...newAlbum, total_tracks: 0 } as Album;
   }
 
   // Update album (admin only)

@@ -3,6 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import { Request } from 'express';
 import { v4 as uuidv4 } from 'uuid';
+import { parseFile } from 'music-metadata';
 
 // Ensure upload directories exist
 const ensureDirectoryExists = (dirPath: string) => {
@@ -284,8 +285,25 @@ export const processUploadedFile = async (
     metadata: undefined
   };
 
+  // Extract audio metadata if it's an audio file
+  if (type === 'audio') {
+    try {
+      const metadata = await parseFile(file.path);
+      result.metadata = {
+        duration: metadata.format.duration ? Math.round(metadata.format.duration) : undefined,
+        bitrate: metadata.format.bitrate,
+        sampleRate: metadata.format.sampleRate,
+        channels: metadata.format.numberOfChannels,
+        format: metadata.format.container
+      };
+      console.log('Extracted audio metadata:', result.metadata);
+    } catch (error) {
+      console.error('Error extracting audio metadata:', error);
+      // Continue without metadata if extraction fails
+    }
+  }
+
   // TODO: Add image processing with sharp
-  // TODO: Add audio metadata extraction with ffmpeg
   
   return result;
 };
