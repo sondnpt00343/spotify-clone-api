@@ -1151,6 +1151,309 @@ class AdminDashboard {
         }
     }
 
+    // Handle album creation with cover image upload
+    async handleAlbumCreation(form, formData, data) {
+        try {
+            // Step 1: Prepare album data (without cover image)
+            const albumData = {};
+            
+            // Handle form fields (excluding file inputs)
+            for (const [key, value] of formData.entries()) {
+                if (!key.endsWith('_file') && value !== '') {
+                    albumData[key] = value;
+                }
+            }
+
+            // Handle checkboxes
+            const checkboxes = form.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                albumData[checkbox.name] = checkbox.checked;
+            });
+
+            console.log('Creating album with data:', albumData);
+
+            // Step 2: Create album first
+            const createResponse = await this.makeAuthenticatedRequest(`${this.apiBase}/albums`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(albumData)
+            });
+
+            if (!createResponse.ok) {
+                const errorData = await createResponse.json();
+                throw new Error(errorData.error?.message || 'Failed to create album');
+            }
+
+            const createResult = await createResponse.json();
+            const albumId = createResult.album.id;
+            console.log('Album created successfully with ID:', albumId);
+
+            // Step 3: Upload cover image if provided
+            const coverFileInput = form.querySelector('input[name="cover_file"]');
+            if (coverFileInput && coverFileInput.files && coverFileInput.files[0]) {
+                const coverFile = coverFileInput.files[0];
+                console.log('Uploading cover image for album:', albumId);
+
+                try {
+                    // Upload cover image using album-specific endpoint
+                    const formData = new FormData();
+                    formData.append('cover', coverFile);
+
+                    const uploadResponse = await this.makeAuthenticatedRequest(`${this.apiBase}/upload/album/${albumId}/cover`, {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!uploadResponse.ok) {
+                        const errorData = await uploadResponse.json();
+                        console.warn('Cover image upload failed:', errorData);
+                        // Don't fail the entire operation, just log the warning
+                    } else {
+                        const uploadResult = await uploadResponse.json();
+                        console.log('Cover image uploaded successfully:', uploadResult);
+                    }
+                } catch (uploadError) {
+                    console.error('Error uploading cover image:', uploadError);
+                    // Don't fail the entire operation, just log the error
+                }
+            }
+
+            // Step 4: Show success and refresh
+            this.showNotification('Album created successfully!', 'success');
+            this.closeModal();
+            this.loadSectionData(this.currentSection);
+
+        } catch (error) {
+            console.error('Error in album creation:', error);
+            this.showNotification(error.message, 'error');
+            this.hideLoading();
+        }
+    }
+
+    // Handle track creation with audio/image files upload
+    async handleTrackCreation(form, formData, data) {
+        try {
+            // Step 1: Prepare track data (without audio/image files)
+            const trackData = {};
+            
+            // Handle form fields (excluding file inputs)
+            for (const [key, value] of formData.entries()) {
+                if (!key.endsWith('_file') && value !== '') {
+                    trackData[key] = value;
+                }
+            }
+
+            // Handle checkboxes
+            const checkboxes = form.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                trackData[checkbox.name] = checkbox.checked;
+            });
+
+            console.log('Creating track with data:', trackData);
+
+            // Step 2: Create track first
+            const createResponse = await this.makeAuthenticatedRequest(`${this.apiBase}/tracks`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(trackData)
+            });
+
+            if (!createResponse.ok) {
+                const errorData = await createResponse.json();
+                throw new Error(errorData.error?.message || 'Failed to create track');
+            }
+
+            const createResult = await createResponse.json();
+            const trackId = createResult.track.id;
+            console.log('Track created successfully with ID:', trackId);
+
+            // Step 3: Upload audio file if provided
+            const audioFileInput = form.querySelector('input[name="audio_file"]');
+            if (audioFileInput && audioFileInput.files && audioFileInput.files[0]) {
+                const audioFile = audioFileInput.files[0];
+                console.log('Uploading audio file for track:', trackId);
+
+                try {
+                    // Upload audio file using track-specific endpoint
+                    const formData = new FormData();
+                    formData.append('audio', audioFile);
+
+                    const uploadResponse = await this.makeAuthenticatedRequest(`${this.apiBase}/upload/track/${trackId}/audio`, {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!uploadResponse.ok) {
+                        const errorData = await uploadResponse.json();
+                        console.warn('Audio file upload failed:', errorData);
+                        // Don't fail the entire operation, just log the warning
+                    } else {
+                        const uploadResult = await uploadResponse.json();
+                        console.log('Audio file uploaded successfully:', uploadResult);
+                    }
+                } catch (uploadError) {
+                    console.error('Error uploading audio file:', uploadError);
+                    // Don't fail the entire operation, just log the error
+                }
+            }
+
+            // Step 4: Upload image file if provided
+            const imageFileInput = form.querySelector('input[name="image_file"]');
+            if (imageFileInput && imageFileInput.files && imageFileInput.files[0]) {
+                const imageFile = imageFileInput.files[0];
+                console.log('Uploading image file for track:', trackId);
+
+                try {
+                    // Upload image file using track-specific endpoint
+                    const formData = new FormData();
+                    formData.append('image', imageFile);
+
+                    const uploadResponse = await this.makeAuthenticatedRequest(`${this.apiBase}/upload/track/${trackId}/image`, {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!uploadResponse.ok) {
+                        const errorData = await uploadResponse.json();
+                        console.warn('Image file upload failed:', errorData);
+                        // Don't fail the entire operation, just log the warning
+                    } else {
+                        const uploadResult = await uploadResponse.json();
+                        console.log('Image file uploaded successfully:', uploadResult);
+                    }
+                } catch (uploadError) {
+                    console.error('Error uploading image file:', uploadError);
+                    // Don't fail the entire operation, just log the error
+                }
+            }
+
+            // Step 5: Show success and refresh
+            this.showNotification('Track created successfully!', 'success');
+            this.closeModal();
+            this.loadSectionData(this.currentSection);
+
+        } catch (error) {
+            console.error('Error in track creation:', error);
+            this.showNotification(error.message, 'error');
+            this.hideLoading();
+        }
+    }
+
+    // Handle artist creation with image/background files upload
+    async handleArtistCreation(form, formData, data) {
+        try {
+            // Step 1: Prepare artist data (without image/background files)
+            const artistData = {};
+            
+            // Handle form fields (excluding file inputs)
+            for (const [key, value] of formData.entries()) {
+                if (!key.endsWith('_file') && value !== '') {
+                    artistData[key] = value;
+                }
+            }
+
+            // Handle checkboxes
+            const checkboxes = form.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                artistData[checkbox.name] = checkbox.checked;
+            });
+
+            console.log('Creating artist with data:', artistData);
+
+            // Step 2: Create artist first
+            const createResponse = await this.makeAuthenticatedRequest(`${this.apiBase}/artists`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(artistData)
+            });
+
+            if (!createResponse.ok) {
+                const errorData = await createResponse.json();
+                throw new Error(errorData.error?.message || 'Failed to create artist');
+            }
+
+            const createResult = await createResponse.json();
+            const artistId = createResult.artist.id;
+            console.log('Artist created successfully with ID:', artistId);
+
+            // Step 3: Upload image file if provided
+            const imageFileInput = form.querySelector('input[name="image_file"]');
+            if (imageFileInput && imageFileInput.files && imageFileInput.files[0]) {
+                const imageFile = imageFileInput.files[0];
+                console.log('Uploading image file for artist:', artistId);
+
+                try {
+                    // Upload image file using artist-specific endpoint
+                    const formData = new FormData();
+                    formData.append('image', imageFile);
+
+                    const uploadResponse = await this.makeAuthenticatedRequest(`${this.apiBase}/upload/artist/${artistId}/image`, {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!uploadResponse.ok) {
+                        const errorData = await uploadResponse.json();
+                        console.warn('Image file upload failed:', errorData);
+                        // Don't fail the entire operation, just log the warning
+                    } else {
+                        const uploadResult = await uploadResponse.json();
+                        console.log('Image file uploaded successfully:', uploadResult);
+                    }
+                } catch (uploadError) {
+                    console.error('Error uploading image file:', uploadError);
+                    // Don't fail the entire operation, just log the error
+                }
+            }
+
+            // Step 4: Upload background file if provided
+            const backgroundFileInput = form.querySelector('input[name="background_file"]');
+            if (backgroundFileInput && backgroundFileInput.files && backgroundFileInput.files[0]) {
+                const backgroundFile = backgroundFileInput.files[0];
+                console.log('Uploading background file for artist:', artistId);
+
+                try {
+                    // Upload background file using artist-specific endpoint
+                    const formData = new FormData();
+                    formData.append('background', backgroundFile);
+
+                    const uploadResponse = await this.makeAuthenticatedRequest(`${this.apiBase}/upload/artist/${artistId}/background`, {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!uploadResponse.ok) {
+                        const errorData = await uploadResponse.json();
+                        console.warn('Background file upload failed:', errorData);
+                        // Don't fail the entire operation, just log the warning
+                    } else {
+                        const uploadResult = await uploadResponse.json();
+                        console.log('Background file uploaded successfully:', uploadResult);
+                    }
+                } catch (uploadError) {
+                    console.error('Error uploading background file:', uploadError);
+                    // Don't fail the entire operation, just log the error
+                }
+            }
+
+            // Step 5: Show success and refresh
+            this.showNotification('Artist created successfully!', 'success');
+            this.closeModal();
+            this.loadSectionData(this.currentSection);
+
+        } catch (error) {
+            console.error('Error in artist creation:', error);
+            this.showNotification(error.message, 'error');
+            this.hideLoading();
+        }
+    }
+
     // Delete item
     async deleteItem(section, id) {
         console.log('deleteItem called:', section, id);
@@ -1192,6 +1495,24 @@ class AdminDashboard {
         this.showLoading();
         
         try {
+            // Special handling for album creation with cover image
+            if (this.currentSection === 'albums' && !this.currentEditId) {
+                // Create album first, then upload cover image if provided
+                return await this.handleAlbumCreation(form, formData, data);
+            }
+
+            // Special handling for track creation with audio/image files
+            if (this.currentSection === 'tracks' && !this.currentEditId) {
+                // Create track first, then upload audio/image files if provided
+                return await this.handleTrackCreation(form, formData, data);
+            }
+
+            // Special handling for artist creation with image/background files
+            if (this.currentSection === 'artists' && !this.currentEditId) {
+                // Create artist first, then upload image/background files if provided
+                return await this.handleArtistCreation(form, formData, data);
+            }
+
             // Handle file uploads first - only upload if there are new files
             const fileInputs = form.querySelectorAll('input[type="file"]');
             for (const input of fileInputs) {
