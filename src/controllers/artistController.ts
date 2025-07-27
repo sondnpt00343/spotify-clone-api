@@ -44,6 +44,14 @@ export class ArtistController {
   static async getPopularTracks(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
+      
+      if (!id) {
+        const error: CustomError = new Error('Artist ID is required');
+        error.statusCode = 400;
+        error.code = 'MISSING_ARTIST_ID';
+        throw error;
+      }
+
       const limit = parseInt(req.query.limit as string) || 10;
       const offset = parseInt(req.query.offset as string) || 0;
 
@@ -89,6 +97,14 @@ export class ArtistController {
   static async getAlbums(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
+
+      if (!id) {
+        const error: CustomError = new Error('Artist ID is required');
+        error.statusCode = 400;
+        error.code = 'MISSING_ARTIST_ID';
+        throw error;
+      }
+
       const limit = parseInt(req.query.limit as string) || 10;
       const offset = parseInt(req.query.offset as string) || 0;
 
@@ -185,6 +201,13 @@ export class ArtistController {
       const { id } = req.params;
       const userId = req.user?.userId;
 
+      if (!id) {
+        const error: CustomError = new Error('Artist ID is required');
+        error.statusCode = 400;
+        error.code = 'MISSING_ARTIST_ID';
+        throw error;
+      }
+
       if (!userId) {
         const error: CustomError = new Error('User not authenticated');
         error.statusCode = 401;
@@ -227,6 +250,13 @@ export class ArtistController {
     try {
       const { id } = req.params;
       const userId = req.user?.userId;
+
+      if (!id) {
+        const error: CustomError = new Error('Artist ID is required');
+        error.statusCode = 400;
+        error.code = 'MISSING_ARTIST_ID';
+        throw error;
+      }
 
       if (!userId) {
         const error: CustomError = new Error('User not authenticated');
@@ -303,6 +333,13 @@ export class ArtistController {
       const { id } = req.params;
       const { name, bio, image_url, background_image_url, is_verified } = req.body;
 
+      if (!id) {
+        const error: CustomError = new Error('Artist ID is required');
+        error.statusCode = 400;
+        error.code = 'MISSING_ARTIST_ID';
+        throw error;
+      }
+
       // Check if artist exists
       const artist = await ArtistModel.findById(id);
       if (!artist) {
@@ -334,6 +371,13 @@ export class ArtistController {
   static async deleteArtist(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
+
+      if (!id) {
+        const error: CustomError = new Error('Artist ID is required');
+        error.statusCode = 400;
+        error.code = 'MISSING_ARTIST_ID';
+        throw error;
+      }
 
       // Check if artist exists
       const artist = await ArtistModel.findById(id);

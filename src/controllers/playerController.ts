@@ -23,9 +23,9 @@ export class PlayerController {
         return res.status(204).send(); // No content - no active playback
       }
 
-      res.status(200).json(currentPlayback);
+      return res.status(200).json(currentPlayback);
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 

@@ -17,7 +17,7 @@ export const generateAccessToken = (payload: JwtPayload): string => {
     expiresIn: process.env.JWT_EXPIRE || '1h',
     issuer: 'spotify-clone-api',
     audience: 'spotify-clone-client'
-  });
+  } as jwt.SignOptions);
 };
 
 export const generateRefreshToken = (payload: JwtPayload): string => {
@@ -30,7 +30,7 @@ export const generateRefreshToken = (payload: JwtPayload): string => {
     expiresIn: process.env.REFRESH_TOKEN_EXPIRE || '30d',
     issuer: 'spotify-clone-api',
     audience: 'spotify-clone-client'
-  });
+  } as jwt.SignOptions);
 };
 
 export const verifyToken = (token: string): JwtPayload => {

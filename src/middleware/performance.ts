@@ -82,7 +82,7 @@ export const cacheMiddleware = (
       return originalJson.call(this, body);
     };
 
-    next();
+    return next();
   };
 };
 
@@ -168,7 +168,7 @@ export const requestSizeLimiter = (maxSize: string = '10mb') => {
       }
     }
     
-    next();
+    return next();
   };
 };
 
@@ -225,7 +225,7 @@ export const cacheStatsMiddleware = (req: Request, res: Response, next: NextFunc
     });
   }
   
-  next();
+  return next();
 };
 
 // Cache clear middleware (for admin use)
@@ -255,7 +255,7 @@ export const cacheClearMiddleware = (req: Request, res: Response, next: NextFunc
     }
   }
   
-  next();
+  return next();
 };
 
 // Pagination optimization
@@ -308,7 +308,7 @@ export const performanceHealthCheck = (req: Request, res: Response, next: NextFu
     });
   }
   
-  next();
+  return next();
 };
 
 // Extend Request interface

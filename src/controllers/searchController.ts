@@ -114,12 +114,12 @@ export class SearchController {
       // Get suggestions
       const suggestions = await SearchModel.getSuggestions(query.trim(), limit);
 
-      res.status(200).json({
+      return res.status(200).json({
         query: query.trim(),
         suggestions
       });
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 

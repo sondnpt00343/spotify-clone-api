@@ -84,6 +84,17 @@ router.get('/users', adminLimiter, async (req, res) => {
 router.get('/users/:id', adminLimiter, async (req, res) => {
   try {
     const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'MISSING_USER_ID',
+          message: 'User ID is required'
+        }
+      });
+    }
+
     const user = await UserModel.findById(id);
     
     if (!user) {
@@ -96,14 +107,14 @@ router.get('/users/:id', adminLimiter, async (req, res) => {
       });
     }
 
-            const userResponse = UserModel.toResponse(user);
-    res.json({
+    const userResponse = UserModel.toResponse(user);
+    return res.json({
       success: true,
       data: userResponse
     });
   } catch (error) {
     console.error('Error fetching user:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: {
         code: 'INTERNAL_ERROR',
@@ -118,6 +129,16 @@ router.put('/users/:id', adminLimiter, async (req, res) => {
   try {
     const { id } = req.params;
     const { display_name, avatar_url } = req.body;
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'MISSING_USER_ID',
+          message: 'User ID is required'
+        }
+      });
+    }
 
     const updatedUser = await UserModel.update(id, {
       display_name: display_name || undefined,
@@ -134,15 +155,15 @@ router.put('/users/:id', adminLimiter, async (req, res) => {
       });
     }
 
-            const userResponse = UserModel.toResponse(updatedUser);
-    res.json({
+    const userResponse = UserModel.toResponse(updatedUser);
+    return res.json({
       success: true,
       data: userResponse,
       message: 'User updated successfully'
     });
   } catch (error) {
     console.error('Error updating user:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: {
         code: 'INTERNAL_ERROR',
@@ -156,6 +177,16 @@ router.put('/users/:id', adminLimiter, async (req, res) => {
 router.delete('/users/:id', adminLimiter, async (req, res) => {
   try {
     const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'MISSING_USER_ID',
+          message: 'User ID is required'
+        }
+      });
+    }
     
     // Check if user exists
     const user = await UserModel.findById(id);
@@ -172,13 +203,13 @@ router.delete('/users/:id', adminLimiter, async (req, res) => {
     // Delete user (this will cascade delete related data)
     await UserModel.delete(id);
 
-    res.json({
+    return res.json({
       success: true,
       message: 'User deleted successfully'
     });
   } catch (error) {
     console.error('Error deleting user:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: {
         code: 'INTERNAL_ERROR',
