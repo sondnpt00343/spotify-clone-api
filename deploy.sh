@@ -11,11 +11,7 @@ pm2 stop spotify-clone-api 2>/dev/null || true
 
 # Install dependencies
 echo "📦 Installing dependencies..."
-npm ci --only=production
-
-# Install TypeScript for building
-echo "🔧 Installing build dependencies..."
-npm install typescript --save-dev
+npm i
 
 # Build the application
 echo "🏗️  Building application..."
