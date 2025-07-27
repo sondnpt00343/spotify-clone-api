@@ -298,7 +298,7 @@ export class ArtistController {
   // POST /api/artists (admin only)
   static async createArtist(req: Request, res: Response, next: NextFunction) {
     try {
-      const { name, bio, image_url, background_image_url, is_verified } = req.body;
+      const { name, bio, image_url, background_image_url, is_verified, monthly_listeners } = req.body;
 
       // Check if artist name already exists
       const existingArtist = await ArtistModel.findByName(name);
@@ -315,7 +315,8 @@ export class ArtistController {
         bio,
         image_url,
         background_image_url,
-        is_verified: is_verified || false
+        is_verified: is_verified || false,
+        monthly_listeners: monthly_listeners || 0
       });
 
       res.status(201).json({
@@ -331,7 +332,7 @@ export class ArtistController {
   static async updateArtist(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      const { name, bio, image_url, background_image_url, is_verified } = req.body;
+      const { name, bio, image_url, background_image_url, is_verified, monthly_listeners } = req.body;
 
       if (!id) {
         const error: CustomError = new Error('Artist ID is required');
@@ -355,7 +356,8 @@ export class ArtistController {
         bio,
         image_url,
         background_image_url,
-        is_verified
+        is_verified,
+        monthly_listeners
       });
 
       res.status(200).json({

@@ -38,33 +38,49 @@ export interface ArtistWithStats extends Artist {
 }
 
 export class ArtistModel {
+  // Helper function to ensure proper boolean casting
+  private static castArtistBooleans(artist: any): any {
+    if (!artist) return artist;
+    return {
+      ...artist,
+      is_verified: Boolean(artist.is_verified)
+    };
+  }
+
+  // Helper function to cast array of artists
+  private static castArtistArrayBooleans(artists: any[]): any[] {
+    return artists.map(artist => this.castArtistBooleans(artist));
+  }
+
   // Find artist by ID
   static async findById(id: string): Promise<Artist | null> {
     const artist = await db('artists').where({ id }).first();
-    return artist || null;
+    return artist ? this.castArtistBooleans(artist) : null;
   }
 
   // Find artist by name (for search)
   static async findByName(name: string): Promise<Artist | null> {
     const artist = await db('artists').where({ name }).first();
-    return artist || null;
+    return artist ? this.castArtistBooleans(artist) : null;
   }
 
   // Get all artists with pagination
   static async getAll(limit: number = 20, offset: number = 0): Promise<Artist[]> {
-    return db('artists')
+    const artists = await db('artists')
       .orderBy('monthly_listeners', 'desc')
       .limit(limit)
       .offset(offset);
+    return this.castArtistArrayBooleans(artists);
   }
 
   // Search artists by name
   static async search(query: string, limit: number = 20, offset: number = 0): Promise<Artist[]> {
-    return db('artists')
+    const artists = await db('artists')
       .where('name', 'like', `%${query}%`)
       .orderBy('monthly_listeners', 'desc')
       .limit(limit)
       .offset(offset);
+    return this.castArtistArrayBooleans(artists);
   }
 
   // Get artist with detailed stats
@@ -78,12 +94,12 @@ export class ArtistModel {
       db('user_follows').where({ artist_id: id }).count('* as count').first()
     ]);
 
-    return {
+    return this.castArtistBooleans({
       ...artist,
       total_tracks: parseInt(trackCount?.count as string) || 0,
       total_albums: parseInt(albumCount?.count as string) || 0,
       total_followers: parseInt(followerCount?.count as string) || 0
-    };
+    });
   }
 
   // Get artist's popular tracks
@@ -127,7 +143,7 @@ export class ArtistModel {
     };
 
     await db('artists').insert(newArtist);
-    return newArtist as Artist;
+    return this.castArtistBooleans(newArtist) as Artist;
   }
 
   // Update artist (admin only)
@@ -175,13 +191,14 @@ export class ArtistModel {
 
   // Get trending artists (most followers gained recently)
   static async getTrending(limit: number = 10): Promise<Artist[]> {
-    return db('artists')
+    const artists = await db('artists')
       .select('artists.*', db.raw('COUNT(user_follows.id) as follower_count'))
       .join('user_follows', 'artists.id', 'user_follows.artist_id')
       .where('user_follows.followed_at', '>', db.raw("datetime('now', '-30 days')"))
       .groupBy('artists.id')
       .orderBy('follower_count', 'desc')
       .limit(limit);
+    return this.castArtistArrayBooleans(artists);
   }
 
   // Update monthly listeners (scheduled job would call this)
