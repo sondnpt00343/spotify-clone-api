@@ -9,13 +9,25 @@ export NODE_ENV=production
 echo "⏹️  Stopping PM2..."
 pm2 stop spotify-clone-api 2>/dev/null || true
 
-# Install dependencies
-echo "📦 Installing dependencies..."
-npm i
-
-# Build the application
-echo "🏗️  Building application..."
-npm run build
+  # Install dependencies
+  echo "📦 Installing dependencies..."
+  npm i
+  
+  # Clean previous build
+  echo "🧹 Cleaning previous build..."
+  rm -rf dist/
+  
+  # Build the application with verbose output
+  echo "🏗️  Building application..."
+  NODE_ENV=production npm run build
+  
+  # Check TypeScript compilation
+  if [ $? -ne 0 ]; then
+    echo "❌ TypeScript compilation failed"
+    echo "🔍 Checking TypeScript installation..."
+    npx tsc --version
+    exit 1
+  fi
 
 # Check if build was successful
 if [ ! -f "dist/app.js" ]; then
