@@ -15,6 +15,7 @@
         "migrate:prod": "NODE_ENV=production knex migrate:latest --knexfile ./knexfile.js",
         "seed:prod": "NODE_ENV=production knex seed:run --knexfile ./knexfile.js",
         "db:setup": "node setup-db.js",
+        "db:migrate": "node migrate-only.js",
         "db:reset": "rm -f production.sqlite && npm run build && npm run db:setup",
         "lint": "eslint src/**/*.ts",
         "lint:fix": "eslint src/**/*.ts --fix"

@@ -9,9 +9,9 @@ pm2 stop spotify-clone-api 2>/dev/null || true
 echo "🏗️  Building..."
 npm run build
 
-# Setup database
-echo "🗄️  Database setup..."
-NODE_ENV=production npm run db:setup
+# Migrate database (preserve existing data)
+echo "🗄️  Database migration..."
+NODE_ENV=production npm run db:migrate
 
 # Start with ecosystem
 echo "▶️  Starting PM2..."
