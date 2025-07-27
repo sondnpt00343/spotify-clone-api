@@ -67,7 +67,7 @@ const router = Router();
 // Rate limiting for upload endpoints
 const uploadLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // limit each IP to 10 uploads per 15 minutes
+  max: 30, // limit each IP to 10 uploads per 15 minutes
   message: {
     error: {
       code: 'UPLOAD_RATE_LIMIT_EXCEEDED',
