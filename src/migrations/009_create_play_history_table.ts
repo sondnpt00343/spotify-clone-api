@@ -1,7 +1,7 @@
-import { Knex } from 'knex';
+import knex from 'knex';
 
-export async function up(knex: Knex): Promise<void> {
-  return knex.schema.createTable('play_history', (table) => {
+export async function up(knex: any): Promise<void> {
+  return knex.schema.createTable('play_history', (table: any) => {
     table.uuid('id').primary();
     table.uuid('user_id').notNullable();
     table.uuid('track_id').notNullable();
@@ -20,6 +20,6 @@ export async function up(knex: Knex): Promise<void> {
   });
 }
 
-export async function down(knex: Knex): Promise<void> {
+export async function down(knex: any): Promise<void> {
   return knex.schema.dropTableIfExists('play_history');
 } 

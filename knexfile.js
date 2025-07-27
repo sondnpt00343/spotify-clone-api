@@ -52,10 +52,12 @@ const config = {
         migrations: {
             directory: "./dist/migrations",
             extension: "js",
+            loadExtensions: [".js"],
         },
         seeds: {
             directory: "./dist/seeds",
             extension: "js",
+            loadExtensions: [".js"],
         },
         pool: {
             min: 2,

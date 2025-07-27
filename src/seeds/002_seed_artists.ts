@@ -1,4 +1,4 @@
-import { Knex } from 'knex';
+import knex from 'knex';
 import { v4 as uuidv4 } from 'uuid';
 
 const artistsData = [
@@ -40,7 +40,7 @@ const artistsData = [
   }
 ];
 
-export async function seed(knex: Knex): Promise<void> {
+export async function seed(knex: any): Promise<void> {
   // Deletes ALL existing entries
   await knex('artists').del();
 

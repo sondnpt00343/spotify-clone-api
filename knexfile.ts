@@ -1,7 +1,9 @@
-import type { Knex } from 'knex';
+import knex from 'knex';
 import path from 'path';
 
-const config: { [key: string]: Knex.Config } = {
+type KnexConfig = Parameters<typeof knex>[0];
+
+const config: { [key: string]: KnexConfig } = {
   development: {
     client: 'sqlite3',
     connection: {

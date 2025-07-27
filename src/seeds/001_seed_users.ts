@@ -1,8 +1,8 @@
-import { Knex } from 'knex';
+import knex from 'knex';
 import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 
-export async function seed(knex: Knex): Promise<void> {
+export async function seed(knex: any): Promise<void> {
   // Deletes ALL existing entries
   await knex('users').del();
 

@@ -1,4 +1,4 @@
-import { Knex } from 'knex';
+import knex from 'knex';
 
 const tracksData = [
   // Đen's tracks
@@ -95,7 +95,7 @@ const tracksData = [
   }
 ];
 
-export async function seed(knex: Knex): Promise<void> {
+export async function seed(knex: any): Promise<void> {
   // Deletes ALL existing entries
   await knex('tracks').del();
 

@@ -4,16 +4,18 @@ const path = require("path");
 const config = {
     client: "sqlite3",
     connection: {
-        filename: process.env.DATAAPP_URL || "./production.sqlite",
+        filename: process.env.DATAAPP_URL || "./database.sqlite",
     },
     useNullAsDefault: true,
     migrations: {
         directory: "./dist/migrations",
         extension: "js",
+        loadExtensions: [".js"],
     },
     seeds: {
         directory: "./dist/seeds",
         extension: "js",
+        loadExtensions: [".js"],
     },
     pool: {
         min: 2,
