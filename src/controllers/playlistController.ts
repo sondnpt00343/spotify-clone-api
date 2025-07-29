@@ -179,7 +179,7 @@ export class PlaylistController {
   static async createPlaylist(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = req.user?.userId;
-      const { name, description, cover_image_url, is_public } = req.body;
+      const { name, description, image_url, is_public } = req.body;
 
       if (!userId) {
         const error: CustomError = new Error('User not authenticated');
@@ -200,7 +200,7 @@ export class PlaylistController {
       const newPlaylist = await PlaylistModel.create(userId, {
         name: name.trim(),
         description,
-        cover_image_url,
+        image_url,
         is_public: is_public || false
       });
 
@@ -218,7 +218,7 @@ export class PlaylistController {
     try {
       const { id } = req.params;
       const userId = req.user?.userId;
-      const { name, description, cover_image_url, is_public } = req.body;
+      const { name, description, image_url, is_public } = req.body;
 
       if (!id) {
         const error: CustomError = new Error('Playlist ID is required');
@@ -247,7 +247,7 @@ export class PlaylistController {
       const updatedPlaylist = await PlaylistModel.update(id, userId, {
         name: name?.trim(),
         description,
-        cover_image_url,
+        image_url,
         is_public
       });
 

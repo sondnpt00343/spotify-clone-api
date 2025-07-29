@@ -5,7 +5,7 @@ export interface Playlist {
   id: string;
   name: string;
   description?: string;
-  cover_image_url?: string;
+  image_url?: string;
   is_public: boolean;
   user_id: string;
   created_at: string;
@@ -47,14 +47,14 @@ export interface PlaylistTrackWithDetails extends PlaylistTrack {
 export interface CreatePlaylistData {
   name: string;
   description?: string;
-  cover_image_url?: string;
+  image_url?: string;
   is_public?: boolean;
 }
 
 export interface UpdatePlaylistData {
   name?: string;
   description?: string;
-  cover_image_url?: string;
+  image_url?: string;
   is_public?: boolean;
 }
 
@@ -199,7 +199,7 @@ export class PlaylistModel {
       id,
       name: playlistData.name,
       description: playlistData.description || null,
-      cover_image_url: playlistData.cover_image_url || null,
+      image_url: playlistData.image_url || null,
       is_public: playlistData.is_public ?? false,
       user_id: userId,
       created_at: new Date().toISOString(),

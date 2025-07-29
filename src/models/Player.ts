@@ -119,7 +119,7 @@ export class PlayerModel {
               .first();
             context = {
               name: playlist.name,
-              image_url: playlist.cover_image_url,
+              image_url: playlist.image_url,
               total_tracks: parseInt(trackCount?.count as string) || 0
             };
           }

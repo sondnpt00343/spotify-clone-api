@@ -181,7 +181,7 @@ export class SearchModel {
         id: playlist.id,
         title: playlist.name,
         subtitle: `By ${playlist.creator_name || playlist.creator_username} • ${playlist.track_count || 0} songs`,
-        image_url: playlist.cover_image_url,
+        image_url: playlist.image_url,
         additional_info: {
           description: playlist.description,
           creator_username: playlist.creator_username,

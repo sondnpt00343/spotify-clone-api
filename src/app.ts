@@ -26,7 +26,28 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Security middleware
-app.use(helmet());
+const allowedOrigins = [
+  "'self'",
+  process.env.APP_URL || 'http://localhost:3000',
+  process.env.CORS_ORIGIN || 'http://localhost:3000'
+].filter((origin, index, self) => origin && self.indexOf(origin) === index); // Remove duplicates
+
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'"],
+      imgSrc: ["'self'", "data:", "https:", "http:"],
+      mediaSrc: allowedOrigins,
+      connectSrc: allowedOrigins,
+      fontSrc: ["'self'", "data:"],
+      objectSrc: ["'none'"],
+      frameSrc: ["'none'"],
+      workerSrc: ["'self'"],
+    },
+  },
+}));
 
 // CORS configuration
 app.use(cors({

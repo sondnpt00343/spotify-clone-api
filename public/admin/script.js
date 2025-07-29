@@ -1,17 +1,17 @@
 // Admin Dashboard JavaScript
 class AdminDashboard {
     constructor() {
-        this.currentSection = 'dashboard';
+        this.currentSection = "dashboard";
         this.currentEditId = null;
-        this.apiBase = '/api';
+        this.apiBase = "/api";
         this.originalFileUrls = {}; // Track original file URLs for edit mode
         this.hasNewFiles = {}; // Track which files have been changed
-        
+
         // Check authentication first
         if (!this.checkAuth()) {
             return;
         }
-        
+
         this.initializeEventListeners();
         this.loadDashboard();
         this.setupUserInfo();
@@ -19,7 +19,7 @@ class AdminDashboard {
 
     // Check if user is authenticated
     checkAuth() {
-        const accessToken = localStorage.getItem('admin_access_token');
+        const accessToken = localStorage.getItem("admin_access_token");
         if (!accessToken) {
             this.redirectToLogin();
             return false;
@@ -29,17 +29,17 @@ class AdminDashboard {
 
     // Redirect to login page
     redirectToLogin() {
-        window.location.href = '/admin/auth';
+        window.location.href = "/admin/auth";
     }
 
     // Get access token for API calls
     getAccessToken() {
-        return localStorage.getItem('admin_access_token');
+        return localStorage.getItem("admin_access_token");
     }
 
     // Get user info
     getUserInfo() {
-        const userStr = localStorage.getItem('admin_user');
+        const userStr = localStorage.getItem("admin_user");
         return userStr ? JSON.parse(userStr) : null;
     }
 
@@ -47,18 +47,19 @@ class AdminDashboard {
     setupUserInfo() {
         const user = this.getUserInfo();
         if (user) {
-            const userNameElement = document.getElementById('user-name');
+            const userNameElement = document.getElementById("user-name");
             if (userNameElement) {
-                userNameElement.textContent = user.display_name || user.username;
+                userNameElement.textContent =
+                    user.display_name || user.username;
             }
-            
+
             // Update user info tooltip
-            const userInfoElement = document.getElementById('user-info');
+            const userInfoElement = document.getElementById("user-info");
             if (userInfoElement) {
                 userInfoElement.title = `Logged in as: ${user.email}`;
             }
-            
-            console.log('Logged in as:', user.username);
+
+            console.log("Logged in as:", user.username);
         }
     }
 
@@ -67,73 +68,75 @@ class AdminDashboard {
         const token = this.getAccessToken();
         if (!token) {
             this.redirectToLogin();
-            throw new Error('No access token');
+            throw new Error("No access token");
         }
 
         const authOptions = {
             ...options,
             headers: {
                 ...options.headers,
-                'Authorization': `Bearer ${token}`
-            }
+                Authorization: `Bearer ${token}`,
+            },
         };
 
         const response = await fetch(url, authOptions);
-        
+
         // If token expired, try to refresh
         if (response.status === 401) {
             const refreshed = await this.refreshToken();
             if (refreshed) {
                 // Retry with new token
-                authOptions.headers['Authorization'] = `Bearer ${this.getAccessToken()}`;
+                authOptions.headers[
+                    "Authorization"
+                ] = `Bearer ${this.getAccessToken()}`;
                 return fetch(url, authOptions);
             } else {
                 this.redirectToLogin();
-                throw new Error('Authentication failed');
+                throw new Error("Authentication failed");
             }
         }
-        
+
         return response;
     }
 
     // Refresh access token
     async refreshToken() {
-        const refreshToken = localStorage.getItem('admin_refresh_token');
+        const refreshToken = localStorage.getItem("admin_refresh_token");
         if (!refreshToken) {
             return false;
         }
 
         try {
             const response = await fetch(`${this.apiBase}/auth/refresh-token`, {
-                method: 'POST',
+                method: "POST",
                 headers: {
-                    'Authorization': `Bearer ${refreshToken}`
-                }
+                    Authorization: `Bearer ${refreshToken}`,
+                },
             });
 
             if (response.ok) {
                 const result = await response.json();
-                localStorage.setItem('admin_access_token', result.access_token);
+                localStorage.setItem("admin_access_token", result.access_token);
                 return true;
             }
         } catch (error) {
-            console.error('Token refresh error:', error);
+            console.error("Token refresh error:", error);
         }
-        
+
         return false;
     }
 
     // Logout function with confirmation
     logout() {
-        if (confirm('Bạn có chắc chắn muốn đăng xuất?')) {
+        if (confirm("Bạn có chắc chắn muốn đăng xuất?")) {
             // Clear all stored data
-            localStorage.removeItem('admin_access_token');
-            localStorage.removeItem('admin_refresh_token');
-            localStorage.removeItem('admin_user');
-            
+            localStorage.removeItem("admin_access_token");
+            localStorage.removeItem("admin_refresh_token");
+            localStorage.removeItem("admin_user");
+
             // Show notification
-            this.showNotification('Đăng xuất thành công!', 'success');
-            
+            this.showNotification("Đăng xuất thành công!", "success");
+
             // Redirect after short delay
             setTimeout(() => {
                 this.redirectToLogin();
@@ -144,63 +147,67 @@ class AdminDashboard {
     // Initialize all event listeners
     initializeEventListeners() {
         // Sidebar navigation
-        document.querySelectorAll('.menu-item').forEach(item => {
-            item.addEventListener('click', (e) => {
+        document.querySelectorAll(".menu-item").forEach((item) => {
+            item.addEventListener("click", (e) => {
                 const section = e.currentTarget.dataset.section;
                 this.switchSection(section);
             });
         });
 
         // Add new button
-        document.getElementById('add-new-btn').addEventListener('click', async () => {
-            await this.openModal('add');
-        });
+        document
+            .getElementById("add-new-btn")
+            .addEventListener("click", async () => {
+                await this.openModal("add");
+            });
 
         // Modal controls
-        document.querySelector('.modal-close').addEventListener('click', () => {
+        document.querySelector(".modal-close").addEventListener("click", () => {
             this.closeModal();
         });
 
-        document.getElementById('cancel-btn').addEventListener('click', () => {
+        document.getElementById("cancel-btn").addEventListener("click", () => {
             this.closeModal();
         });
 
         // Form submission
-        document.getElementById('modal-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.handleSubmit();
-        });
+        document
+            .getElementById("modal-form")
+            .addEventListener("submit", (e) => {
+                e.preventDefault();
+                this.handleSubmit();
+            });
 
         // Close modal on backdrop click
-        document.getElementById('modal').addEventListener('click', (e) => {
-            if (e.target.id === 'modal') {
+        document.getElementById("modal").addEventListener("click", (e) => {
+            if (e.target.id === "modal") {
                 this.closeModal();
             }
         });
 
         // Event delegation for edit and delete buttons
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.btn-edit')) {
+        document.addEventListener("click", (e) => {
+            if (e.target.closest(".btn-edit")) {
                 e.preventDefault();
-                const button = e.target.closest('.btn-edit');
+                const button = e.target.closest(".btn-edit");
                 const section = button.dataset.section;
                 const id = button.dataset.id;
-                console.log('Edit clicked:', section, id);
+                console.log("Edit clicked:", section, id);
                 this.editItem(section, id);
             }
-            
-            if (e.target.closest('.btn-delete')) {
+
+            if (e.target.closest(".btn-delete")) {
                 e.preventDefault();
-                const button = e.target.closest('.btn-delete');
+                const button = e.target.closest(".btn-delete");
                 const section = button.dataset.section;
                 const id = button.dataset.id;
-                console.log('Delete clicked:', section, id);
+                console.log("Delete clicked:", section, id);
                 this.deleteItem(section, id);
             }
         });
 
         // Logout button event listener
-        document.getElementById('logout-btn').addEventListener('click', (e) => {
+        document.getElementById("logout-btn").addEventListener("click", (e) => {
             e.preventDefault();
             this.logout();
         });
@@ -209,16 +216,18 @@ class AdminDashboard {
     // Switch between sections
     switchSection(section) {
         // Update sidebar active state
-        document.querySelectorAll('.menu-item').forEach(item => {
-            item.classList.remove('active');
+        document.querySelectorAll(".menu-item").forEach((item) => {
+            item.classList.remove("active");
         });
-        document.querySelector(`[data-section="${section}"]`).classList.add('active');
+        document
+            .querySelector(`[data-section="${section}"]`)
+            .classList.add("active");
 
         // Update content sections
-        document.querySelectorAll('.content-section').forEach(section => {
-            section.classList.remove('active');
+        document.querySelectorAll(".content-section").forEach((section) => {
+            section.classList.remove("active");
         });
-        document.getElementById(`${section}-section`).classList.add('active');
+        document.getElementById(`${section}-section`).classList.add("active");
 
         // Update page title and controls
         this.currentSection = section;
@@ -226,7 +235,7 @@ class AdminDashboard {
         this.updateHeaderControls(section);
 
         // Load section data
-        if (section !== 'dashboard') {
+        if (section !== "dashboard") {
             this.loadSectionData(section);
         }
     }
@@ -234,24 +243,27 @@ class AdminDashboard {
     // Update page title
     updatePageTitle(section) {
         const titles = {
-            dashboard: 'Dashboard',
-            users: 'Users Management',
-            artists: 'Artists Management',
-            albums: 'Albums Management',
-            tracks: 'Tracks Management',
-            playlists: 'Playlists Management'
+            dashboard: "Dashboard",
+            users: "Users Management",
+            artists: "Artists Management",
+            albums: "Albums Management",
+            tracks: "Tracks Management",
+            playlists: "Playlists Management",
         };
-        document.getElementById('page-title').textContent = titles[section];
+        document.getElementById("page-title").textContent = titles[section];
     }
 
     // Update header controls
     updateHeaderControls(section) {
-        const addBtn = document.getElementById('add-new-btn');
-        if (section === 'dashboard') {
-            addBtn.style.display = 'none';
+        const addBtn = document.getElementById("add-new-btn");
+        if (section === "dashboard") {
+            addBtn.style.display = "none";
         } else {
-            addBtn.style.display = 'flex';
-            addBtn.querySelector('span').textContent = `Add New ${section.slice(0, -1)}`;
+            addBtn.style.display = "flex";
+            addBtn.querySelector("span").textContent = `Add New ${section.slice(
+                0,
+                -1
+            )}`;
         }
     }
 
@@ -259,16 +271,21 @@ class AdminDashboard {
     async loadDashboard() {
         this.showLoading();
         try {
-            const stats = await this.fetchData('stats');
+            const stats = await this.fetchData("stats");
 
-            document.getElementById('total-users').textContent = stats.users || 0;
-            document.getElementById('total-artists').textContent = stats.artists || 0;
-            document.getElementById('total-albums').textContent = stats.albums || 0;
-            document.getElementById('total-tracks').textContent = stats.tracks || 0;
-            document.getElementById('total-playlists').textContent = stats.playlists || 0;
+            document.getElementById("total-users").textContent =
+                stats.users || 0;
+            document.getElementById("total-artists").textContent =
+                stats.artists || 0;
+            document.getElementById("total-albums").textContent =
+                stats.albums || 0;
+            document.getElementById("total-tracks").textContent =
+                stats.tracks || 0;
+            document.getElementById("total-playlists").textContent =
+                stats.playlists || 0;
         } catch (error) {
-            console.error('Error loading dashboard:', error);
-            this.showNotification('Error loading dashboard data', 'error');
+            console.error("Error loading dashboard:", error);
+            this.showNotification("Error loading dashboard data", "error");
         }
         this.hideLoading();
     }
@@ -281,7 +298,7 @@ class AdminDashboard {
             this.renderTable(section, data);
         } catch (error) {
             console.error(`Error loading ${section}:`, error);
-            this.showNotification(`Error loading ${section} data`, 'error');
+            this.showNotification(`Error loading ${section} data`, "error");
         }
         this.hideLoading();
     }
@@ -290,13 +307,13 @@ class AdminDashboard {
     async fetchData(endpoint) {
         try {
             let url = `${this.apiBase}/${endpoint}`;
-            
+
             // Special handling for some endpoints
-            if (endpoint === 'users') {
+            if (endpoint === "users") {
                 url = `${this.apiBase}/admin/users`;
-            } else if (endpoint === 'playlists') {
+            } else if (endpoint === "playlists") {
                 url = `${this.apiBase}/playlists`;
-            } else if (endpoint === 'stats') {
+            } else if (endpoint === "stats") {
                 url = `${this.apiBase}/admin/stats`;
                 const response = await this.makeAuthenticatedRequest(url);
                 if (!response.ok) {
@@ -310,9 +327,16 @@ class AdminDashboard {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-            
+
             const result = await response.json();
-            return result.data || result.artists || result.albums || result.tracks || result.playlists || result;
+            return (
+                result.data ||
+                result.artists ||
+                result.albums ||
+                result.tracks ||
+                result.playlists ||
+                result
+            );
         } catch (error) {
             console.error(`Error fetching ${endpoint}:`, error);
             return [];
@@ -324,7 +348,7 @@ class AdminDashboard {
         const tableBody = document.querySelector(`#${section}-table tbody`);
         if (!tableBody) return;
 
-        tableBody.innerHTML = '';
+        tableBody.innerHTML = "";
 
         if (!data || data.length === 0) {
             tableBody.innerHTML = `
@@ -335,7 +359,7 @@ class AdminDashboard {
             return;
         }
 
-        data.forEach(item => {
+        data.forEach((item) => {
             const row = this.createTableRow(section, item);
             tableBody.appendChild(row);
         });
@@ -343,22 +367,22 @@ class AdminDashboard {
 
     // Create table row for an item
     createTableRow(section, item) {
-        const row = document.createElement('tr');
-        
+        const row = document.createElement("tr");
+
         switch (section) {
-            case 'users':
+            case "users":
                 row.innerHTML = this.createUserRow(item);
                 break;
-            case 'artists':
+            case "artists":
                 row.innerHTML = this.createArtistRow(item);
                 break;
-            case 'albums':
+            case "albums":
                 row.innerHTML = this.createAlbumRow(item);
                 break;
-            case 'tracks':
+            case "tracks":
                 row.innerHTML = this.createTrackRow(item);
                 break;
-            case 'playlists':
+            case "playlists":
                 row.innerHTML = this.createPlaylistRow(item);
                 break;
         }
@@ -370,20 +394,26 @@ class AdminDashboard {
     createUserRow(user) {
         return `
             <td>
-                <img src="${user.avatar_url || '/static/admin/default-avatar.png'}" 
+                <img src="${
+                    user.avatar_url || "/static/admin/default-avatar.png"
+                }" 
                      alt="${user.display_name}" 
                      onerror="this.src='/static/admin/default-avatar.png'">
             </td>
             <td>${user.email}</td>
             <td>${user.username}</td>
-            <td>${user.display_name || '-'}</td>
+            <td>${user.display_name || "-"}</td>
             <td>${new Date(user.created_at).toLocaleDateString()}</td>
             <td>
                 <div class="action-buttons">
-                    <button class="btn btn-edit btn-sm" data-section="users" data-id="${user.id}">
+                    <button class="btn btn-edit btn-sm" data-section="users" data-id="${
+                        user.id
+                    }">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button class="btn btn-danger btn-sm btn-delete" data-section="users" data-id="${user.id}">
+                    <button class="btn btn-danger btn-sm btn-delete" data-section="users" data-id="${
+                        user.id
+                    }">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
@@ -395,24 +425,32 @@ class AdminDashboard {
     createArtistRow(artist) {
         return `
             <td>
-                <img src="${artist.image_url || '/static/admin/default-artist.png'}" 
+                <img src="${
+                    artist.image_url || "/static/admin/default-artist.png"
+                }" 
                      alt="${artist.name}" 
                      onerror="this.src='/static/admin/default-artist.png'">
             </td>
             <td>${artist.name}</td>
             <td>${(artist.monthly_listeners || 0).toLocaleString()}</td>
             <td>
-                <span class="badge ${artist.is_verified ? 'badge-success' : 'badge-danger'}">
-                    ${artist.is_verified ? 'Verified' : 'Not Verified'}
+                <span class="badge ${
+                    artist.is_verified ? "badge-success" : "badge-danger"
+                }">
+                    ${artist.is_verified ? "Verified" : "Not Verified"}
                 </span>
             </td>
             <td>${new Date(artist.created_at).toLocaleDateString()}</td>
             <td>
                 <div class="action-buttons">
-                    <button class="btn btn-edit btn-sm" data-section="artists" data-id="${artist.id}">
+                    <button class="btn btn-edit btn-sm" data-section="artists" data-id="${
+                        artist.id
+                    }">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button class="btn btn-danger btn-sm btn-delete" data-section="artists" data-id="${artist.id}">
+                    <button class="btn btn-danger btn-sm btn-delete" data-section="artists" data-id="${
+                        artist.id
+                    }">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
@@ -424,21 +462,27 @@ class AdminDashboard {
     createAlbumRow(album) {
         return `
             <td>
-                <img src="${album.cover_image_url || '/static/admin/default-album.png'}" 
+                <img src="${
+                    album.cover_image_url || "/static/admin/default-album.png"
+                }" 
                      alt="${album.title}" 
                      class="album-cover"
                      onerror="this.src='/static/admin/default-album.png'">
             </td>
             <td>${album.title}</td>
-            <td>${album.artist_name || '-'}</td>
+            <td>${album.artist_name || "-"}</td>
             <td>${new Date(album.release_date).toLocaleDateString()}</td>
             <td>${album.total_tracks || 0}</td>
             <td>
                 <div class="action-buttons">
-                    <button class="btn btn-edit btn-sm" data-section="albums" data-id="${album.id}">
+                    <button class="btn btn-edit btn-sm" data-section="albums" data-id="${
+                        album.id
+                    }">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button class="btn btn-danger btn-sm btn-delete" data-section="albums" data-id="${album.id}">
+                    <button class="btn btn-danger btn-sm btn-delete" data-section="albums" data-id="${
+                        album.id
+                    }">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
@@ -451,22 +495,30 @@ class AdminDashboard {
         const duration = this.formatDuration(track.duration);
         return `
             <td>
-                <img src="${track.image_url || track.album_cover_image_url || '/static/admin/default-track.png'}" 
+                <img src="${
+                    track.image_url ||
+                    track.album_cover_image_url ||
+                    "/static/admin/default-track.png"
+                }" 
                      alt="${track.title}" 
                      class="track-image"
                      onerror="this.src='/static/admin/default-track.png'">
             </td>
             <td>${track.title}</td>
-            <td>${track.artist_name || '-'}</td>
-            <td>${track.album_title || '-'}</td>
+            <td>${track.artist_name || "-"}</td>
+            <td>${track.album_title || "-"}</td>
             <td>${duration}</td>
             <td>${(track.play_count || 0).toLocaleString()}</td>
             <td>
                 <div class="action-buttons">
-                    <button class="btn btn-edit btn-sm" data-section="tracks" data-id="${track.id}">
+                    <button class="btn btn-edit btn-sm" data-section="tracks" data-id="${
+                        track.id
+                    }">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button class="btn btn-danger btn-sm btn-delete" data-section="tracks" data-id="${track.id}">
+                    <button class="btn btn-danger btn-sm btn-delete" data-section="tracks" data-id="${
+                        track.id
+                    }">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
@@ -478,25 +530,33 @@ class AdminDashboard {
     createPlaylistRow(playlist) {
         return `
             <td>
-                <img src="${playlist.cover_image_url || '/static/admin/default-playlist.png'}" 
+                <img src="${
+                    playlist.image_url || "/static/admin/default-playlist.png"
+                }" 
                      alt="${playlist.name}" 
                      onerror="this.src='/static/admin/default-playlist.png'">
             </td>
             <td>${playlist.name}</td>
-            <td>${playlist.user_username || '-'}</td>
+            <td>${playlist.user_username || "-"}</td>
             <td>
-                <span class="badge ${playlist.is_public ? 'badge-success' : 'badge-danger'}">
-                    ${playlist.is_public ? 'Public' : 'Private'}
+                <span class="badge ${
+                    playlist.is_public ? "badge-success" : "badge-danger"
+                }">
+                    ${playlist.is_public ? "Public" : "Private"}
                 </span>
             </td>
             <td>${playlist.total_tracks || 0}</td>
             <td>${new Date(playlist.created_at).toLocaleDateString()}</td>
             <td>
                 <div class="action-buttons">
-                    <button class="btn btn-edit btn-sm" data-section="playlists" data-id="${playlist.id}">
+                    <button class="btn btn-edit btn-sm" data-section="playlists" data-id="${
+                        playlist.id
+                    }">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button class="btn btn-danger btn-sm btn-delete" data-section="playlists" data-id="${playlist.id}">
+                    <button class="btn btn-danger btn-sm btn-delete" data-section="playlists" data-id="${
+                        playlist.id
+                    }">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
@@ -506,25 +566,29 @@ class AdminDashboard {
 
     // Open modal for add/edit
     async openModal(mode, itemId = null) {
-        console.log('openModal called:', mode, itemId, this.currentSection);
+        console.log("openModal called:", mode, itemId, this.currentSection);
         this.currentEditId = itemId;
-        const modal = document.getElementById('modal');
-        const title = document.getElementById('modal-title');
-        const formFields = document.getElementById('form-fields');
+        const modal = document.getElementById("modal");
+        const title = document.getElementById("modal-title");
+        const formFields = document.getElementById("form-fields");
 
-        title.textContent = mode === 'add' ? 
-            `Add New ${this.currentSection.slice(0, -1)}` : 
-            `Edit ${this.currentSection.slice(0, -1)}`;
+        title.textContent =
+            mode === "add"
+                ? `Add New ${this.currentSection.slice(0, -1)}`
+                : `Edit ${this.currentSection.slice(0, -1)}`;
 
-        formFields.innerHTML = this.generateFormFields(this.currentSection, mode);
-        
+        formFields.innerHTML = this.generateFormFields(
+            this.currentSection,
+            mode
+        );
+
         // Load select options first
         await this.loadSelectOptions();
-        
+
         // Add file input change listeners
         this.setupFileInputs();
-        
-        if (mode === 'edit' && itemId) {
+
+        if (mode === "edit" && itemId) {
             await this.populateForm(itemId);
         } else {
             // Reset file tracking for add mode
@@ -532,126 +596,223 @@ class AdminDashboard {
             this.hasNewFiles = {};
         }
 
-        modal.classList.add('show');
-        console.log('Modal should be visible now');
+        modal.classList.add("show");
+        console.log("Modal should be visible now");
     }
 
     // Close modal
     closeModal() {
-        console.log('Closing modal');
-        const modal = document.getElementById('modal');
-        modal.classList.remove('show');
+        console.log("Closing modal");
+        const modal = document.getElementById("modal");
+        modal.classList.remove("show");
         this.currentEditId = null;
-        
+
         // Clear form
-        const form = document.getElementById('modal-form');
+        const form = document.getElementById("modal-form");
         if (form) {
             form.reset();
         }
-        
+
         // Reset file tracking
         this.originalFileUrls = {};
         this.hasNewFiles = {};
-        
+
         // Clear all file previews
         const previews = document.querySelectorAll('[id$="_preview"]');
-        previews.forEach(preview => {
-            preview.innerHTML = '';
+        previews.forEach((preview) => {
+            preview.innerHTML = "";
         });
     }
 
     // Generate form fields for a section
-    generateFormFields(section, mode = 'add') {
+    generateFormFields(section, mode = "add") {
         const fields = this.getFieldsConfig(section);
-        return fields.map(field => {
-            // Make audio file optional for edit mode (since existing tracks already have audio)
-            if (field.type === 'file' && field.name === 'audio_file' && mode === 'edit') {
-                field = { ...field, required: false };
-            }
-            
-            if (field.type === 'select') {
-                return this.createSelectField(field);
-            } else if (field.type === 'checkbox') {
-                return this.createCheckboxField(field);
-            } else if (field.type === 'textarea') {
-                return this.createTextareaField(field);
-            } else {
-                return this.createInputField(field);
-            }
-        }).join('');
+        return fields
+            .map((field) => {
+                // Make audio file optional for edit mode (since existing tracks already have audio)
+                if (
+                    field.type === "file" &&
+                    field.name === "audio_file" &&
+                    mode === "edit"
+                ) {
+                    field = { ...field, required: false };
+                }
+
+                if (field.type === "select") {
+                    return this.createSelectField(field);
+                } else if (field.type === "checkbox") {
+                    return this.createCheckboxField(field);
+                } else if (field.type === "textarea") {
+                    return this.createTextareaField(field);
+                } else {
+                    return this.createInputField(field);
+                }
+            })
+            .join("");
     }
 
     // Get fields configuration for each section
     getFieldsConfig(section) {
         const configs = {
             users: [
-                { name: 'email', label: 'Email', type: 'email', required: true },
-                { name: 'username', label: 'Username', type: 'text', required: true },
-                { name: 'display_name', label: 'Display Name', type: 'text' },
-                { name: 'avatar_file', label: 'Avatar Image', type: 'file', accept: 'image/*' }
+                {
+                    name: "email",
+                    label: "Email",
+                    type: "email",
+                    required: true,
+                },
+                {
+                    name: "username",
+                    label: "Username",
+                    type: "text",
+                    required: true,
+                },
+                { name: "display_name", label: "Display Name", type: "text" },
+                {
+                    name: "avatar_file",
+                    label: "Avatar Image",
+                    type: "file",
+                    accept: "image/*",
+                },
             ],
             artists: [
-                { name: 'name', label: 'Name', type: 'text', required: true },
-                { name: 'bio', label: 'Bio', type: 'textarea' },
-                { name: 'image_file', label: 'Artist Image', type: 'file', accept: 'image/*' },
-                { name: 'background_file', label: 'Background Image', type: 'file', accept: 'image/*' },
-                { name: 'monthly_listeners', label: 'Monthly Listeners', type: 'number' },
-                { name: 'is_verified', label: 'Verified Artist', type: 'checkbox' }
+                { name: "name", label: "Name", type: "text", required: true },
+                { name: "bio", label: "Bio", type: "textarea" },
+                {
+                    name: "image_file",
+                    label: "Artist Image",
+                    type: "file",
+                    accept: "image/*",
+                },
+                {
+                    name: "background_file",
+                    label: "Background Image",
+                    type: "file",
+                    accept: "image/*",
+                },
+                {
+                    name: "monthly_listeners",
+                    label: "Monthly Listeners",
+                    type: "number",
+                },
+                {
+                    name: "is_verified",
+                    label: "Verified Artist",
+                    type: "checkbox",
+                },
             ],
             albums: [
-                { name: 'title', label: 'Title', type: 'text', required: true },
-                { name: 'description', label: 'Description', type: 'textarea' },
-                { name: 'cover_file', label: 'Cover Image', type: 'file', accept: 'image/*' },
-                { name: 'release_date', label: 'Release Date', type: 'date', required: true },
-                { name: 'artist_id', label: 'Artist', type: 'select', required: true, options: 'artists' }
+                { name: "title", label: "Title", type: "text", required: true },
+                { name: "description", label: "Description", type: "textarea" },
+                {
+                    name: "cover_file",
+                    label: "Cover Image",
+                    type: "file",
+                    accept: "image/*",
+                },
+                {
+                    name: "release_date",
+                    label: "Release Date",
+                    type: "date",
+                    required: true,
+                },
+                {
+                    name: "artist_id",
+                    label: "Artist",
+                    type: "select",
+                    required: true,
+                    options: "artists",
+                },
             ],
             tracks: [
-                { name: 'title', label: 'Title', type: 'text', required: true },
-                { name: 'duration', label: 'Duration (seconds)', type: 'number', required: true },
-                { name: 'audio_file', label: 'Audio File', type: 'file', accept: 'audio/*', required: true },
-                { name: 'image_file', label: 'Track Image', type: 'file', accept: 'image/*' },
-                { name: 'artist_id', label: 'Artist', type: 'select', required: true, options: 'artists' },
-                { name: 'album_id', label: 'Album', type: 'select', options: 'albums' },
-                { name: 'track_number', label: 'Track Number', type: 'number' }
+                { name: "title", label: "Title", type: "text", required: true },
+                {
+                    name: "duration",
+                    label: "Duration (seconds)",
+                    type: "number",
+                    required: true,
+                },
+                {
+                    name: "audio_file",
+                    label: "Audio File",
+                    type: "file",
+                    accept: "audio/*",
+                    required: true,
+                },
+                {
+                    name: "image_file",
+                    label: "Track Image",
+                    type: "file",
+                    accept: "image/*",
+                },
+                {
+                    name: "artist_id",
+                    label: "Artist",
+                    type: "select",
+                    required: true,
+                    options: "artists",
+                },
+                {
+                    name: "album_id",
+                    label: "Album",
+                    type: "select",
+                    options: "albums",
+                },
+                { name: "track_number", label: "Track Number", type: "number" },
             ],
             playlists: [
-                { name: 'name', label: 'Name', type: 'text', required: true },
-                { name: 'description', label: 'Description', type: 'textarea' },
-                { name: 'cover_file', label: 'Cover Image', type: 'file', accept: 'image/*' },
-                { name: 'is_public', label: 'Public Playlist', type: 'checkbox' }
-            ]
+                { name: "name", label: "Name", type: "text", required: true },
+                { name: "description", label: "Description", type: "textarea" },
+                {
+                    name: "cover_file",
+                    label: "Cover Image",
+                    type: "file",
+                    accept: "image/*",
+                },
+                {
+                    name: "is_public",
+                    label: "Public Playlist",
+                    type: "checkbox",
+                },
+            ],
         };
         return configs[section] || [];
     }
 
     // Create input field HTML
     createInputField(field) {
-        if (field.type === 'file') {
+        if (field.type === "file") {
             return `
                 <div class="form-group">
-                    <label for="${field.name}">${field.label}${field.required ? ' *' : ''}</label>
+                    <label for="${field.name}">${field.label}${
+                field.required ? " *" : ""
+            }</label>
                     <input 
                         type="file" 
                         id="${field.name}" 
                         name="${field.name}" 
                         class="form-control"
-                        accept="${field.accept || '*'}"
-                        ${field.required ? 'required' : ''}
+                        accept="${field.accept || "*"}"
+                        ${field.required ? "required" : ""}
                     />
-                    <div class="file-preview" id="${field.name}_preview" style="margin-top: 10px;"></div>
+                    <div class="file-preview" id="${
+                        field.name
+                    }_preview" style="margin-top: 10px;"></div>
                 </div>
             `;
         }
-        
+
         return `
             <div class="form-group">
-                <label for="${field.name}">${field.label}${field.required ? ' *' : ''}</label>
+                <label for="${field.name}">${field.label}${
+            field.required ? " *" : ""
+        }</label>
                 <input 
                     type="${field.type}" 
                     id="${field.name}" 
                     name="${field.name}" 
                     class="form-control"
-                    ${field.required ? 'required' : ''}
+                    ${field.required ? "required" : ""}
                 />
             </div>
         `;
@@ -661,13 +822,15 @@ class AdminDashboard {
     createTextareaField(field) {
         return `
             <div class="form-group">
-                <label for="${field.name}">${field.label}${field.required ? ' *' : ''}</label>
+                <label for="${field.name}">${field.label}${
+            field.required ? " *" : ""
+        }</label>
                 <textarea 
                     id="${field.name}" 
                     name="${field.name}" 
                     class="form-control"
                     rows="3"
-                    ${field.required ? 'required' : ''}
+                    ${field.required ? "required" : ""}
                 ></textarea>
             </div>
         `;
@@ -693,13 +856,15 @@ class AdminDashboard {
     createSelectField(field) {
         return `
             <div class="form-group">
-                <label for="${field.name}">${field.label}${field.required ? ' *' : ''}</label>
+                <label for="${field.name}">${field.label}${
+            field.required ? " *" : ""
+        }</label>
                 <select 
                     id="${field.name}" 
                     name="${field.name}" 
                     class="form-control"
                     data-options="${field.options}"
-                    ${field.required ? 'required' : ''}
+                    ${field.required ? "required" : ""}
                 >
                     <option value="">Select ${field.label}</option>
                 </select>
@@ -711,17 +876,17 @@ class AdminDashboard {
     formatDuration(seconds) {
         const minutes = Math.floor(seconds / 60);
         const remainingSeconds = seconds % 60;
-        return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+        return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
     }
 
     // Edit item
     async editItem(section, id) {
-        console.log('editItem called:', section, id);
+        console.log("editItem called:", section, id);
         try {
-            await this.openModal('edit', id);
+            await this.openModal("edit", id);
         } catch (error) {
-            console.error('Error in editItem:', error);
-            this.showNotification('Error opening edit modal', 'error');
+            console.error("Error in editItem:", error);
+            this.showNotification("Error opening edit modal", "error");
         }
     }
 
@@ -729,157 +894,164 @@ class AdminDashboard {
     async populateForm(id) {
         try {
             let url = `${this.apiBase}/${this.currentSection}/${id}`;
-            if (this.currentSection === 'users') {
+            if (this.currentSection === "users") {
                 url = `${this.apiBase}/admin/users/${id}`;
             }
-            
+
             const response = await this.makeAuthenticatedRequest(url);
             if (!response.ok) {
-                throw new Error('Failed to fetch item data');
+                throw new Error("Failed to fetch item data");
             }
-            
+
             const result = await response.json();
             const data = result.data || result;
-            
+
             // Reset file tracking for edit mode
             this.originalFileUrls = {};
             this.hasNewFiles = {};
-            
+
             // Populate form fields
-            Object.keys(data).forEach(key => {
+            Object.keys(data).forEach((key) => {
                 const field = document.getElementById(key);
                 if (field) {
-                    if (field.type === 'checkbox') {
+                    if (field.type === "checkbox") {
                         field.checked = data[key];
-                    } else if (field.type === 'date' && data[key]) {
-                        field.value = data[key].split('T')[0]; // Format date for input
+                    } else if (field.type === "date" && data[key]) {
+                        field.value = data[key].split("T")[0]; // Format date for input
                     } else {
-                        field.value = data[key] || '';
+                        field.value = data[key] || "";
                     }
                 }
             });
-            
+
             // Disable email and username fields for user edit (admin restriction)
-            if (this.currentSection === 'users') {
-                const emailField = document.getElementById('email');
-                const usernameField = document.getElementById('username');
-                
+            if (this.currentSection === "users") {
+                const emailField = document.getElementById("email");
+                const usernameField = document.getElementById("username");
+
                 if (emailField) {
                     emailField.readOnly = true;
-                    emailField.style.backgroundColor = '#f8f9fa';
-                    emailField.style.cursor = 'not-allowed';
-                    emailField.title = 'Email cannot be changed for security reasons';
+                    emailField.style.backgroundColor = "#f8f9fa";
+                    emailField.style.cursor = "not-allowed";
+                    emailField.title =
+                        "Email cannot be changed for security reasons";
                 }
-                
+
                 if (usernameField) {
                     usernameField.readOnly = true;
-                    usernameField.style.backgroundColor = '#f8f9fa';
-                    usernameField.style.cursor = 'not-allowed';
-                    usernameField.title = 'Username cannot be changed for security reasons';
+                    usernameField.style.backgroundColor = "#f8f9fa";
+                    usernameField.style.cursor = "not-allowed";
+                    usernameField.title =
+                        "Username cannot be changed for security reasons";
                 }
             }
-            
+
             // Handle file URL fields - show existing file previews
             const fileUrlMapping = {
-                'avatar_url': 'avatar_file',
-                'image_url': 'image_file', 
-                'background_image_url': 'background_file',
-                'cover_image_url': 'cover_file',
-                'audio_url': 'audio_file'
+                avatar_url: "avatar_file",
+                image_url:
+                    this.currentSection === "playlists"
+                        ? "cover_file"
+                        : "image_file",
+                background_image_url: "background_file",
+                cover_image_url: "cover_file",
+                audio_url: "audio_file",
             };
-            
-            Object.keys(fileUrlMapping).forEach(urlField => {
+
+            Object.keys(fileUrlMapping).forEach((urlField) => {
                 const fileInputName = fileUrlMapping[urlField];
                 const fileUrl = data[urlField];
-                
+
                 if (fileUrl) {
                     // Store original URL
                     this.originalFileUrls[fileInputName] = fileUrl;
                     this.hasNewFiles[fileInputName] = false;
-                    
+
                     // Show existing file preview
                     this.showExistingFilePreview(fileInputName, fileUrl);
                 }
             });
-            
+
             // Handle select fields by loading options first
             await this.loadSelectOptions();
-            
+
             // Set select field values after options are loaded
             // Handle artist_id first, then album_id for dependency
             if (data.artist_id) {
-                const artistField = document.getElementById('artist_id');
+                const artistField = document.getElementById("artist_id");
                 if (artistField) {
                     artistField.value = data.artist_id;
                     // Update album options based on selected artist
                     await this.updateAlbumOptions(data.artist_id);
                 }
             }
-            
+
             // Then set other select values including album_id
-            Object.keys(data).forEach(key => {
+            Object.keys(data).forEach((key) => {
                 const field = document.getElementById(key);
-                if (field && field.tagName === 'SELECT') {
-                    field.value = data[key] || '';
+                if (field && field.tagName === "SELECT") {
+                    field.value = data[key] || "";
                 }
             });
         } catch (error) {
-            console.error('Error populating form:', error);
-            this.showNotification('Error loading item data', 'error');
+            console.error("Error populating form:", error);
+            this.showNotification("Error loading item data", "error");
         }
     }
 
     // Load options for select fields
     async loadSelectOptions() {
-        const selects = document.querySelectorAll('select[data-options]');
+        const selects = document.querySelectorAll("select[data-options]");
         for (const select of selects) {
             const optionsType = select.dataset.options;
-            if (optionsType === 'artists') {
-                const artists = await this.fetchData('artists');
+            if (optionsType === "artists") {
+                const artists = await this.fetchData("artists");
                 select.innerHTML = '<option value="">Select Artist</option>';
-                artists.forEach(artist => {
-                    const option = document.createElement('option');
+                artists.forEach((artist) => {
+                    const option = document.createElement("option");
                     option.value = artist.id;
                     option.textContent = artist.name;
                     select.appendChild(option);
                 });
-                
+
                 // Add change listener for artist select to update album options
-                if (select.id === 'artist_id') {
-                    select.addEventListener('change', () => {
+                if (select.id === "artist_id") {
+                    select.addEventListener("change", () => {
                         this.updateAlbumOptions(select.value);
                     });
                 }
-            } else if (optionsType === 'albums') {
+            } else if (optionsType === "albums") {
                 // Load all albums initially, will be filtered by artist
-                const albums = await this.fetchData('albums');
+                const albums = await this.fetchData("albums");
                 this.allAlbums = albums; // Store for filtering
                 this.updateAlbumOptions(null); // Initial load with no filter
             }
         }
     }
-    
+
     // Update album options based on selected artist
     async updateAlbumOptions(artistId) {
-        const albumSelect = document.getElementById('album_id');
+        const albumSelect = document.getElementById("album_id");
         if (!albumSelect) return;
-        
+
         // Ensure we have albums data
         if (!this.allAlbums) {
-            this.allAlbums = await this.fetchData('albums');
+            this.allAlbums = await this.fetchData("albums");
         }
-        
+
         albumSelect.innerHTML = '<option value="">Select Album</option>';
-        
+
         // Filter albums by artist if artistId is provided
-        const filteredAlbums = artistId ? 
-            this.allAlbums.filter(album => album.artist_id === artistId) :
-            this.allAlbums;
-        
-        filteredAlbums.forEach(album => {
-            const option = document.createElement('option');
+        const filteredAlbums = artistId
+            ? this.allAlbums.filter((album) => album.artist_id === artistId)
+            : this.allAlbums;
+
+        filteredAlbums.forEach((album) => {
+            const option = document.createElement("option");
             option.value = album.id;
-            option.textContent = `${album.title}${album.artist_name ? ` - ${album.artist_name}` : ''}`;
+            option.textContent = `${album.title}${
+                album.artist_name ? ` - ${album.artist_name}` : ""
+            }`;
             albumSelect.appendChild(option);
         });
     }
@@ -887,8 +1059,8 @@ class AdminDashboard {
     // Setup file input change listeners and preview
     setupFileInputs() {
         const fileInputs = document.querySelectorAll('input[type="file"]');
-        fileInputs.forEach(input => {
-            input.addEventListener('change', (e) => {
+        fileInputs.forEach((input) => {
+            input.addEventListener("change", (e) => {
                 this.previewFile(e.target);
             });
         });
@@ -898,10 +1070,10 @@ class AdminDashboard {
     showExistingFilePreview(inputName, fileUrl) {
         const preview = document.getElementById(`${inputName}_preview`);
         if (!preview) return;
-        
+
         // Convert relative path to full URL if needed
         const fullUrl = this.convertToFullUrl(fileUrl);
-        
+
         if (this.isImageFile(fileUrl)) {
             preview.innerHTML = `
                 <div class="existing-file-preview">
@@ -955,13 +1127,13 @@ class AdminDashboard {
     previewFile(input) {
         const file = input.files[0];
         const preview = document.getElementById(`${input.name}_preview`);
-        
+
         if (!file || !preview) return;
-        
+
         // Mark as having new file
         this.hasNewFiles[input.name] = true;
-        
-        if (file.type.startsWith('image/')) {
+
+        if (file.type.startsWith("image/")) {
             const reader = new FileReader();
             reader.onload = (e) => {
                 preview.innerHTML = `
@@ -981,7 +1153,7 @@ class AdminDashboard {
                 `;
             };
             reader.readAsDataURL(file);
-        } else if (file.type.startsWith('audio/')) {
+        } else if (file.type.startsWith("audio/")) {
             preview.innerHTML = `
                 <div class="new-file-preview" style="padding: 10px; background: #f0f8ff; border-radius: 5px; border: 1px solid #1DB954;">
                     <p style="margin: 0 0 5px 0; font-size: 0.8rem; color: #666;">
@@ -989,9 +1161,13 @@ class AdminDashboard {
                         New: ${file.name}
                     </p>
                     <audio controls style="width: 100%; margin-bottom: 5px;">
-                        <source src="${URL.createObjectURL(file)}" type="${file.type}">
+                        <source src="${URL.createObjectURL(file)}" type="${
+                file.type
+            }">
                     </audio>
-                    <button type="button" class="btn btn-sm btn-outline" onclick="adminDashboard.clearFileSelection('${input.name}')" 
+                    <button type="button" class="btn btn-sm btn-outline" onclick="adminDashboard.clearFileSelection('${
+                        input.name
+                    }')" 
                             style="padding: 2px 8px; font-size: 0.7rem;">
                         <i class="fas fa-undo"></i> Revert
                     </button>
@@ -1015,13 +1191,13 @@ class AdminDashboard {
 
     // Utility functions for file handling
     convertToFullUrl(url) {
-        if (!url) return '';
-        if (url.startsWith('http://') || url.startsWith('https://')) {
+        if (!url) return "";
+        if (url.startsWith("http://") || url.startsWith("https://")) {
             return url;
         }
         // Handle relative URLs
         const baseUrl = window.location.origin;
-        return url.startsWith('/') ? `${baseUrl}${url}` : `${baseUrl}/${url}`;
+        return url.startsWith("/") ? `${baseUrl}${url}` : `${baseUrl}/${url}`;
     }
 
     isImageFile(url) {
@@ -1040,113 +1216,149 @@ class AdminDashboard {
     clearFileSelection(inputName) {
         const fileInput = document.getElementById(inputName);
         const preview = document.getElementById(`${inputName}_preview`);
-        
+
         if (fileInput) {
-            fileInput.value = ''; // Clear the file input
+            fileInput.value = ""; // Clear the file input
         }
-        
+
         this.hasNewFiles[inputName] = false;
-        
+
         // Show original file preview if exists
         if (this.originalFileUrls[inputName]) {
-            this.showExistingFilePreview(inputName, this.originalFileUrls[inputName]);
+            this.showExistingFilePreview(
+                inputName,
+                this.originalFileUrls[inputName]
+            );
         } else {
             // No original file, clear preview
             if (preview) {
-                preview.innerHTML = '';
+                preview.innerHTML = "";
             }
         }
     }
 
     // Upload file to server with authentication
-    async uploadFile(file, type = 'image', fieldName = null) {
+    async uploadFile(file, type = "image", fieldName = null) {
         const formData = new FormData();
-        
+
         // Determine the correct endpoint and field name based on type and field
         let endpoint;
         let fieldKey;
         let needsResourceId = false;
-        
-        if (fieldName === 'avatar_file' || type === 'avatar') {
+
+        if (fieldName === "avatar_file" || type === "avatar") {
             // Use avatar upload endpoint for user avatars
             endpoint = `${this.apiBase}/upload/avatar`;
-            fieldKey = 'avatar';
-        } else if (fieldName === 'image_file' && this.currentSection === 'artists') {
+            fieldKey = "avatar";
+        } else if (
+            fieldName === "image_file" &&
+            this.currentSection === "artists"
+        ) {
             // Artist image upload - needs artist ID
             endpoint = `${this.apiBase}/upload/artist/{resourceId}/image`;
-            fieldKey = 'image';
+            fieldKey = "image";
             needsResourceId = true;
-        } else if (fieldName === 'background_file' && this.currentSection === 'artists') {
+        } else if (
+            fieldName === "background_file" &&
+            this.currentSection === "artists"
+        ) {
             // Artist background image upload - needs artist ID
             endpoint = `${this.apiBase}/upload/artist/{resourceId}/background`;
-            fieldKey = 'background';
+            fieldKey = "background";
             needsResourceId = true;
-        } else if (fieldName === 'cover_file' && this.currentSection === 'albums') {
+        } else if (
+            fieldName === "cover_file" &&
+            this.currentSection === "albums"
+        ) {
             // Album cover upload - needs album ID
             endpoint = `${this.apiBase}/upload/album/{resourceId}/cover`;
-            fieldKey = 'cover';
+            fieldKey = "cover";
             needsResourceId = true;
-        } else if (fieldName === 'cover_file' && this.currentSection === 'playlists') {
+        } else if (
+            fieldName === "cover_file" &&
+            this.currentSection === "playlists"
+        ) {
             // Playlist cover upload - needs playlist ID
             endpoint = `${this.apiBase}/upload/playlist/{resourceId}/cover`;
-            fieldKey = 'cover';
+            fieldKey = "cover";
             needsResourceId = true;
-        } else if (fieldName === 'audio_file' && this.currentSection === 'tracks') {
+        } else if (
+            fieldName === "audio_file" &&
+            this.currentSection === "tracks"
+        ) {
             // Track audio upload - needs track ID
             endpoint = `${this.apiBase}/upload/track/{resourceId}/audio`;
-            fieldKey = 'audio';
+            fieldKey = "audio";
             needsResourceId = true;
-        } else if (fieldName === 'image_file' && this.currentSection === 'tracks') {
+        } else if (
+            fieldName === "image_file" &&
+            this.currentSection === "tracks"
+        ) {
             // Track image upload - needs track ID
             endpoint = `${this.apiBase}/upload/track/{resourceId}/image`;
-            fieldKey = 'image';
+            fieldKey = "image";
             needsResourceId = true;
         } else {
             // Use generic images endpoint for other images (fallback)
             endpoint = `${this.apiBase}/upload/images`;
-            fieldKey = 'images';
+            fieldKey = "images";
         }
-        
+
         // For resource-specific uploads, we need to handle this differently
         // if the resource doesn't exist yet (create mode)
         if (needsResourceId && !this.currentEditId) {
             // Fall back to generic upload for new resources
             endpoint = `${this.apiBase}/upload/images`;
-            fieldKey = 'images';
+            fieldKey = "images";
         } else if (needsResourceId && this.currentEditId) {
             // Replace placeholder with actual ID
-            endpoint = endpoint.replace('{resourceId}', this.currentEditId);
+            endpoint = endpoint.replace("{resourceId}", this.currentEditId);
         }
-        
+
         formData.append(fieldKey, file);
-        
+
         try {
             const response = await this.makeAuthenticatedRequest(endpoint, {
-                method: 'POST',
-                body: formData
+                method: "POST",
+                body: formData,
             });
-            
+
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.error?.message || 'Upload failed');
+                throw new Error(errorData.error?.message || "Upload failed");
             }
-            
+
             const result = await response.json();
-            console.log('Upload result:', result);
-            
+            console.log("Upload result:", result);
+
             // Handle different response structures
-            if (fieldKey === 'avatar' || fieldKey === 'image' || fieldKey === 'cover' || fieldKey === 'background' || fieldKey === 'audio') {
+            if (
+                fieldKey === "avatar" ||
+                fieldKey === "image" ||
+                fieldKey === "cover" ||
+                fieldKey === "background" ||
+                fieldKey === "audio"
+            ) {
                 // Specific resource upload response: { file: { url, filename, size } }
                 return result.file?.url || result.file?.filename;
             } else {
                 // Generic images upload response: { data: [{ url, filename }] }
-                if (result.data && Array.isArray(result.data) && result.data.length > 0) {
+                if (
+                    result.data &&
+                    Array.isArray(result.data) &&
+                    result.data.length > 0
+                ) {
                     return result.data[0].url || result.data[0].filename;
                 }
-                return result.data?.url || result.file?.url || result.url || result.filename;
+                return (
+                    result.data?.url ||
+                    result.file?.url ||
+                    result.url ||
+                    result.filename
+                );
             }
         } catch (error) {
-            console.error('Error uploading file:', error);
+            console.error("Error uploading file:", error);
             throw error;
         }
     }
@@ -1156,78 +1368,94 @@ class AdminDashboard {
         try {
             // Step 1: Prepare album data (without cover image)
             const albumData = {};
-            
+
             // Handle form fields (excluding file inputs)
             for (const [key, value] of formData.entries()) {
-                if (!key.endsWith('_file') && value !== '') {
+                if (!key.endsWith("_file") && value !== "") {
                     albumData[key] = value;
                 }
             }
 
             // Handle checkboxes
             const checkboxes = form.querySelectorAll('input[type="checkbox"]');
-            checkboxes.forEach(checkbox => {
+            checkboxes.forEach((checkbox) => {
                 albumData[checkbox.name] = checkbox.checked;
             });
 
-            console.log('Creating album with data:', albumData);
+            console.log("Creating album with data:", albumData);
 
             // Step 2: Create album first
-            const createResponse = await this.makeAuthenticatedRequest(`${this.apiBase}/albums`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(albumData)
-            });
+            const createResponse = await this.makeAuthenticatedRequest(
+                `${this.apiBase}/albums`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(albumData),
+                }
+            );
 
             if (!createResponse.ok) {
                 const errorData = await createResponse.json();
-                throw new Error(errorData.error?.message || 'Failed to create album');
+                throw new Error(
+                    errorData.error?.message || "Failed to create album"
+                );
             }
 
             const createResult = await createResponse.json();
             const albumId = createResult.album.id;
-            console.log('Album created successfully with ID:', albumId);
+            console.log("Album created successfully with ID:", albumId);
 
             // Step 3: Upload cover image if provided
-            const coverFileInput = form.querySelector('input[name="cover_file"]');
-            if (coverFileInput && coverFileInput.files && coverFileInput.files[0]) {
+            const coverFileInput = form.querySelector(
+                'input[name="cover_file"]'
+            );
+            if (
+                coverFileInput &&
+                coverFileInput.files &&
+                coverFileInput.files[0]
+            ) {
                 const coverFile = coverFileInput.files[0];
-                console.log('Uploading cover image for album:', albumId);
+                console.log("Uploading cover image for album:", albumId);
 
                 try {
                     // Upload cover image using album-specific endpoint
                     const formData = new FormData();
-                    formData.append('cover', coverFile);
+                    formData.append("cover", coverFile);
 
-                    const uploadResponse = await this.makeAuthenticatedRequest(`${this.apiBase}/upload/album/${albumId}/cover`, {
-                        method: 'POST',
-                        body: formData
-                    });
+                    const uploadResponse = await this.makeAuthenticatedRequest(
+                        `${this.apiBase}/upload/album/${albumId}/cover`,
+                        {
+                            method: "POST",
+                            body: formData,
+                        }
+                    );
 
                     if (!uploadResponse.ok) {
                         const errorData = await uploadResponse.json();
-                        console.warn('Cover image upload failed:', errorData);
+                        console.warn("Cover image upload failed:", errorData);
                         // Don't fail the entire operation, just log the warning
                     } else {
                         const uploadResult = await uploadResponse.json();
-                        console.log('Cover image uploaded successfully:', uploadResult);
+                        console.log(
+                            "Cover image uploaded successfully:",
+                            uploadResult
+                        );
                     }
                 } catch (uploadError) {
-                    console.error('Error uploading cover image:', uploadError);
+                    console.error("Error uploading cover image:", uploadError);
                     // Don't fail the entire operation, just log the error
                 }
             }
 
             // Step 4: Show success and refresh
-            this.showNotification('Album created successfully!', 'success');
+            this.showNotification("Album created successfully!", "success");
             this.closeModal();
             this.loadSectionData(this.currentSection);
-
         } catch (error) {
-            console.error('Error in album creation:', error);
-            this.showNotification(error.message, 'error');
+            console.error("Error in album creation:", error);
+            this.showNotification(error.message, "error");
             this.hideLoading();
         }
     }
@@ -1237,108 +1465,136 @@ class AdminDashboard {
         try {
             // Step 1: Prepare track data (without audio/image files)
             const trackData = {};
-            
+
             // Handle form fields (excluding file inputs)
             for (const [key, value] of formData.entries()) {
-                if (!key.endsWith('_file') && value !== '') {
+                if (!key.endsWith("_file") && value !== "") {
                     trackData[key] = value;
                 }
             }
 
             // Handle checkboxes
             const checkboxes = form.querySelectorAll('input[type="checkbox"]');
-            checkboxes.forEach(checkbox => {
+            checkboxes.forEach((checkbox) => {
                 trackData[checkbox.name] = checkbox.checked;
             });
 
-            console.log('Creating track with data:', trackData);
+            console.log("Creating track with data:", trackData);
 
             // Step 2: Create track first
-            const createResponse = await this.makeAuthenticatedRequest(`${this.apiBase}/tracks`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(trackData)
-            });
+            const createResponse = await this.makeAuthenticatedRequest(
+                `${this.apiBase}/tracks`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(trackData),
+                }
+            );
 
             if (!createResponse.ok) {
                 const errorData = await createResponse.json();
-                throw new Error(errorData.error?.message || 'Failed to create track');
+                throw new Error(
+                    errorData.error?.message || "Failed to create track"
+                );
             }
 
             const createResult = await createResponse.json();
             const trackId = createResult.track.id;
-            console.log('Track created successfully with ID:', trackId);
+            console.log("Track created successfully with ID:", trackId);
 
             // Step 3: Upload audio file if provided
-            const audioFileInput = form.querySelector('input[name="audio_file"]');
-            if (audioFileInput && audioFileInput.files && audioFileInput.files[0]) {
+            const audioFileInput = form.querySelector(
+                'input[name="audio_file"]'
+            );
+            if (
+                audioFileInput &&
+                audioFileInput.files &&
+                audioFileInput.files[0]
+            ) {
                 const audioFile = audioFileInput.files[0];
-                console.log('Uploading audio file for track:', trackId);
+                console.log("Uploading audio file for track:", trackId);
 
                 try {
                     // Upload audio file using track-specific endpoint
                     const formData = new FormData();
-                    formData.append('audio', audioFile);
+                    formData.append("audio", audioFile);
 
-                    const uploadResponse = await this.makeAuthenticatedRequest(`${this.apiBase}/upload/track/${trackId}/audio`, {
-                        method: 'POST',
-                        body: formData
-                    });
+                    const uploadResponse = await this.makeAuthenticatedRequest(
+                        `${this.apiBase}/upload/track/${trackId}/audio`,
+                        {
+                            method: "POST",
+                            body: formData,
+                        }
+                    );
 
                     if (!uploadResponse.ok) {
                         const errorData = await uploadResponse.json();
-                        console.warn('Audio file upload failed:', errorData);
+                        console.warn("Audio file upload failed:", errorData);
                         // Don't fail the entire operation, just log the warning
                     } else {
                         const uploadResult = await uploadResponse.json();
-                        console.log('Audio file uploaded successfully:', uploadResult);
+                        console.log(
+                            "Audio file uploaded successfully:",
+                            uploadResult
+                        );
                     }
                 } catch (uploadError) {
-                    console.error('Error uploading audio file:', uploadError);
+                    console.error("Error uploading audio file:", uploadError);
                     // Don't fail the entire operation, just log the error
                 }
             }
 
             // Step 4: Upload image file if provided
-            const imageFileInput = form.querySelector('input[name="image_file"]');
-            if (imageFileInput && imageFileInput.files && imageFileInput.files[0]) {
+            const imageFileInput = form.querySelector(
+                'input[name="image_file"]'
+            );
+            if (
+                imageFileInput &&
+                imageFileInput.files &&
+                imageFileInput.files[0]
+            ) {
                 const imageFile = imageFileInput.files[0];
-                console.log('Uploading image file for track:', trackId);
+                console.log("Uploading image file for track:", trackId);
 
                 try {
                     // Upload image file using track-specific endpoint
                     const formData = new FormData();
-                    formData.append('image', imageFile);
+                    formData.append("image", imageFile);
 
-                    const uploadResponse = await this.makeAuthenticatedRequest(`${this.apiBase}/upload/track/${trackId}/image`, {
-                        method: 'POST',
-                        body: formData
-                    });
+                    const uploadResponse = await this.makeAuthenticatedRequest(
+                        `${this.apiBase}/upload/track/${trackId}/image`,
+                        {
+                            method: "POST",
+                            body: formData,
+                        }
+                    );
 
                     if (!uploadResponse.ok) {
                         const errorData = await uploadResponse.json();
-                        console.warn('Image file upload failed:', errorData);
+                        console.warn("Image file upload failed:", errorData);
                         // Don't fail the entire operation, just log the warning
                     } else {
                         const uploadResult = await uploadResponse.json();
-                        console.log('Image file uploaded successfully:', uploadResult);
+                        console.log(
+                            "Image file uploaded successfully:",
+                            uploadResult
+                        );
                     }
                 } catch (uploadError) {
-                    console.error('Error uploading image file:', uploadError);
+                    console.error("Error uploading image file:", uploadError);
                     // Don't fail the entire operation, just log the error
                 }
             }
 
             // Step 5: Show success and refresh
-            this.showNotification('Track created successfully!', 'success');
+            this.showNotification("Track created successfully!", "success");
             this.closeModal();
             this.loadSectionData(this.currentSection);
-
         } catch (error) {
-            console.error('Error in track creation:', error);
-            this.showNotification(error.message, 'error');
+            console.error("Error in track creation:", error);
+            this.showNotification(error.message, "error");
             this.hideLoading();
         }
     }
@@ -1348,167 +1604,201 @@ class AdminDashboard {
         try {
             // Step 1: Prepare artist data (without image/background files)
             const artistData = {};
-            
+
             // Handle form fields (excluding file inputs)
             for (const [key, value] of formData.entries()) {
-                if (!key.endsWith('_file') && value !== '') {
+                if (!key.endsWith("_file") && value !== "") {
                     artistData[key] = value;
                 }
             }
 
             // Handle checkboxes
             const checkboxes = form.querySelectorAll('input[type="checkbox"]');
-            checkboxes.forEach(checkbox => {
+            checkboxes.forEach((checkbox) => {
                 artistData[checkbox.name] = checkbox.checked;
             });
 
-            console.log('Creating artist with data:', artistData);
+            console.log("Creating artist with data:", artistData);
 
             // Step 2: Create artist first
-            const createResponse = await this.makeAuthenticatedRequest(`${this.apiBase}/artists`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(artistData)
-            });
+            const createResponse = await this.makeAuthenticatedRequest(
+                `${this.apiBase}/artists`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(artistData),
+                }
+            );
 
             if (!createResponse.ok) {
                 const errorData = await createResponse.json();
-                throw new Error(errorData.error?.message || 'Failed to create artist');
+                throw new Error(
+                    errorData.error?.message || "Failed to create artist"
+                );
             }
 
             const createResult = await createResponse.json();
             const artistId = createResult.artist.id;
-            console.log('Artist created successfully with ID:', artistId);
+            console.log("Artist created successfully with ID:", artistId);
 
             // Step 3: Upload image file if provided
-            const imageFileInput = form.querySelector('input[name="image_file"]');
-            if (imageFileInput && imageFileInput.files && imageFileInput.files[0]) {
+            const imageFileInput = form.querySelector(
+                'input[name="image_file"]'
+            );
+            if (
+                imageFileInput &&
+                imageFileInput.files &&
+                imageFileInput.files[0]
+            ) {
                 const imageFile = imageFileInput.files[0];
-                console.log('Uploading image file for artist:', artistId);
+                console.log("Uploading image file for artist:", artistId);
 
                 try {
                     // Upload image file using artist-specific endpoint
                     const formData = new FormData();
-                    formData.append('image', imageFile);
+                    formData.append("image", imageFile);
 
-                    const uploadResponse = await this.makeAuthenticatedRequest(`${this.apiBase}/upload/artist/${artistId}/image`, {
-                        method: 'POST',
-                        body: formData
-                    });
+                    const uploadResponse = await this.makeAuthenticatedRequest(
+                        `${this.apiBase}/upload/artist/${artistId}/image`,
+                        {
+                            method: "POST",
+                            body: formData,
+                        }
+                    );
 
                     if (!uploadResponse.ok) {
                         const errorData = await uploadResponse.json();
-                        console.warn('Image file upload failed:', errorData);
+                        console.warn("Image file upload failed:", errorData);
                         // Don't fail the entire operation, just log the warning
                     } else {
                         const uploadResult = await uploadResponse.json();
-                        console.log('Image file uploaded successfully:', uploadResult);
+                        console.log(
+                            "Image file uploaded successfully:",
+                            uploadResult
+                        );
                     }
                 } catch (uploadError) {
-                    console.error('Error uploading image file:', uploadError);
+                    console.error("Error uploading image file:", uploadError);
                     // Don't fail the entire operation, just log the error
                 }
             }
 
             // Step 4: Upload background file if provided
-            const backgroundFileInput = form.querySelector('input[name="background_file"]');
-            if (backgroundFileInput && backgroundFileInput.files && backgroundFileInput.files[0]) {
+            const backgroundFileInput = form.querySelector(
+                'input[name="background_file"]'
+            );
+            if (
+                backgroundFileInput &&
+                backgroundFileInput.files &&
+                backgroundFileInput.files[0]
+            ) {
                 const backgroundFile = backgroundFileInput.files[0];
-                console.log('Uploading background file for artist:', artistId);
+                console.log("Uploading background file for artist:", artistId);
 
                 try {
                     // Upload background file using artist-specific endpoint
                     const formData = new FormData();
-                    formData.append('background', backgroundFile);
+                    formData.append("background", backgroundFile);
 
-                    const uploadResponse = await this.makeAuthenticatedRequest(`${this.apiBase}/upload/artist/${artistId}/background`, {
-                        method: 'POST',
-                        body: formData
-                    });
+                    const uploadResponse = await this.makeAuthenticatedRequest(
+                        `${this.apiBase}/upload/artist/${artistId}/background`,
+                        {
+                            method: "POST",
+                            body: formData,
+                        }
+                    );
 
                     if (!uploadResponse.ok) {
                         const errorData = await uploadResponse.json();
-                        console.warn('Background file upload failed:', errorData);
+                        console.warn(
+                            "Background file upload failed:",
+                            errorData
+                        );
                         // Don't fail the entire operation, just log the warning
                     } else {
                         const uploadResult = await uploadResponse.json();
-                        console.log('Background file uploaded successfully:', uploadResult);
+                        console.log(
+                            "Background file uploaded successfully:",
+                            uploadResult
+                        );
                     }
                 } catch (uploadError) {
-                    console.error('Error uploading background file:', uploadError);
+                    console.error(
+                        "Error uploading background file:",
+                        uploadError
+                    );
                     // Don't fail the entire operation, just log the error
                 }
             }
 
             // Step 5: Show success and refresh
-            this.showNotification('Artist created successfully!', 'success');
+            this.showNotification("Artist created successfully!", "success");
             this.closeModal();
             this.loadSectionData(this.currentSection);
-
         } catch (error) {
-            console.error('Error in artist creation:', error);
-            this.showNotification(error.message, 'error');
+            console.error("Error in artist creation:", error);
+            this.showNotification(error.message, "error");
             this.hideLoading();
         }
     }
 
     // Delete item
     async deleteItem(section, id) {
-        console.log('deleteItem called:', section, id);
-        if (!confirm('Are you sure you want to delete this item?')) {
+        console.log("deleteItem called:", section, id);
+        if (!confirm("Are you sure you want to delete this item?")) {
             return;
         }
 
         this.showLoading();
         try {
             let url = `${this.apiBase}/${section}/${id}`;
-            if (section === 'users') {
+            if (section === "users") {
                 url = `${this.apiBase}/admin/users/${id}`;
             }
 
             const response = await this.makeAuthenticatedRequest(url, {
-                method: 'DELETE'
+                method: "DELETE",
             });
 
             if (response.ok) {
-                this.showNotification('Item deleted successfully', 'success');
+                this.showNotification("Item deleted successfully", "success");
                 this.loadSectionData(section);
                 this.loadDashboard(); // Update stats
             } else {
-                throw new Error('Delete failed');
+                throw new Error("Delete failed");
             }
         } catch (error) {
-            console.error('Error deleting item:', error);
-            this.showNotification('Error deleting item', 'error');
+            console.error("Error deleting item:", error);
+            this.showNotification("Error deleting item", "error");
         }
         this.hideLoading();
     }
 
     // Handle form submission
     async handleSubmit() {
-        const form = document.getElementById('modal-form');
+        const form = document.getElementById("modal-form");
         const formData = new FormData(form);
         const data = {};
 
         this.showLoading();
-        
+
         try {
             // Special handling for album creation with cover image
-            if (this.currentSection === 'albums' && !this.currentEditId) {
+            if (this.currentSection === "albums" && !this.currentEditId) {
                 // Create album first, then upload cover image if provided
                 return await this.handleAlbumCreation(form, formData, data);
             }
 
             // Special handling for track creation with audio/image files
-            if (this.currentSection === 'tracks' && !this.currentEditId) {
+            if (this.currentSection === "tracks" && !this.currentEditId) {
                 // Create track first, then upload audio/image files if provided
                 return await this.handleTrackCreation(form, formData, data);
             }
 
             // Special handling for artist creation with image/background files
-            if (this.currentSection === 'artists' && !this.currentEditId) {
+            if (this.currentSection === "artists" && !this.currentEditId) {
                 // Create artist first, then upload image/background files if provided
                 return await this.handleArtistCreation(form, formData, data);
             }
@@ -1517,60 +1807,91 @@ class AdminDashboard {
             const fileInputs = form.querySelectorAll('input[type="file"]');
             for (const input of fileInputs) {
                 // Check if this input has a new file and should be uploaded
-                if (input.files && input.files[0] && this.hasNewFiles[input.name]) {
+                if (
+                    input.files &&
+                    input.files[0] &&
+                    this.hasNewFiles[input.name]
+                ) {
                     const file = input.files[0];
-                    let uploadType = 'image';
-                    
+                    let uploadType = "image";
+
                     // Determine upload type based on field name
-                    if (input.name.includes('audio')) {
-                        uploadType = 'audio';
-                    } else if (input.name === 'avatar_file') {
-                        uploadType = 'avatar';
-                    } else if (input.name.includes('image') || input.name.includes('cover') || input.name.includes('background')) {
-                        uploadType = 'image';
+                    if (input.name.includes("audio")) {
+                        uploadType = "audio";
+                    } else if (input.name === "avatar_file") {
+                        uploadType = "avatar";
+                    } else if (
+                        input.name.includes("image") ||
+                        input.name.includes("cover") ||
+                        input.name.includes("background")
+                    ) {
+                        uploadType = "image";
                     }
-                    
+
                     try {
-                        const uploadedUrl = await this.uploadFile(file, uploadType, input.name);
-                        
+                        const uploadedUrl = await this.uploadFile(
+                            file,
+                            uploadType,
+                            input.name
+                        );
+
                         // Map file field names to URL field names
                         const fieldMapping = {
-                            'avatar_file': 'avatar_url',
-                            'image_file': 'image_url',
-                            'background_file': 'background_image_url',
-                            'cover_file': 'cover_image_url',
-                            'audio_file': 'audio_url'
+                            avatar_file: "avatar_url",
+                            image_file: "image_url",
+                            background_file: "background_image_url",
+                            cover_file:
+                                this.currentSection === "playlists"
+                                    ? "image_url"
+                                    : "cover_image_url",
+                            audio_file: "audio_url",
                         };
-                        
-                        const urlFieldName = fieldMapping[input.name] || input.name.replace('_file', '_url');
+
+                        const urlFieldName =
+                            fieldMapping[input.name] ||
+                            input.name.replace("_file", "_url");
                         data[urlFieldName] = uploadedUrl;
                     } catch (uploadError) {
-                        console.error('Error uploading file:', uploadError);
-                        this.showNotification(`Error uploading ${input.files[0].name}`, 'error');
+                        console.error("Error uploading file:", uploadError);
+                        this.showNotification(
+                            `Error uploading ${input.files[0].name}`,
+                            "error"
+                        );
                         this.hideLoading();
                         return;
                     }
-                } else if (!this.hasNewFiles[input.name] && this.originalFileUrls[input.name]) {
+                } else if (
+                    !this.hasNewFiles[input.name] &&
+                    this.originalFileUrls[input.name]
+                ) {
                     // No new file, but we have an original URL - keep the original
                     const fieldMapping = {
-                        'avatar_file': 'avatar_url',
-                        'image_file': 'image_url',
-                        'background_file': 'background_image_url',
-                        'cover_file': 'cover_image_url',
-                        'audio_file': 'audio_url'
+                        avatar_file: "avatar_url",
+                        image_file: "image_url",
+                        background_file: "background_image_url",
+                        cover_file:
+                            this.currentSection === "playlists"
+                                ? "image_url"
+                                : "cover_image_url",
+                        audio_file: "audio_url",
                     };
-                    
-                    const urlFieldName = fieldMapping[input.name] || input.name.replace('_file', '_url');
+
+                    const urlFieldName =
+                        fieldMapping[input.name] ||
+                        input.name.replace("_file", "_url");
                     data[urlFieldName] = this.originalFileUrls[input.name];
                 }
             }
 
             // Handle other form fields
             for (const [key, value] of formData.entries()) {
-                if (!key.endsWith('_file') && value !== '') {
+                if (!key.endsWith("_file") && value !== "") {
                     // Skip email and username for user updates (read-only fields)
-                    if (this.currentSection === 'users' && this.currentEditId && 
-                        (key === 'email' || key === 'username')) {
+                    if (
+                        this.currentSection === "users" &&
+                        this.currentEditId &&
+                        (key === "email" || key === "username")
+                    ) {
                         continue;
                     }
                     data[key] = value;
@@ -1579,68 +1900,79 @@ class AdminDashboard {
 
             // Handle checkboxes
             const checkboxes = form.querySelectorAll('input[type="checkbox"]');
-            checkboxes.forEach(checkbox => {
+            checkboxes.forEach((checkbox) => {
                 data[checkbox.name] = checkbox.checked;
             });
 
-            const method = this.currentEditId ? 'PUT' : 'POST';
+            const method = this.currentEditId ? "PUT" : "POST";
             let url;
-            
-            if (this.currentSection === 'users') {
-                url = this.currentEditId ? 
-                    `${this.apiBase}/admin/users/${this.currentEditId}` :
-                    `${this.apiBase}/admin/users`;
+
+            if (this.currentSection === "users") {
+                url = this.currentEditId
+                    ? `${this.apiBase}/admin/users/${this.currentEditId}`
+                    : `${this.apiBase}/admin/users`;
             } else {
-                url = this.currentEditId ? 
-                    `${this.apiBase}/${this.currentSection}/${this.currentEditId}` :
-                    `${this.apiBase}/${this.currentSection}`;
+                url = this.currentEditId
+                    ? `${this.apiBase}/${this.currentSection}/${this.currentEditId}`
+                    : `${this.apiBase}/${this.currentSection}`;
             }
 
             // Debug logging for track and album operations
-            if (this.currentSection === 'tracks') {
-                console.log('Track form data being sent:', data);
-                console.log('Track operation:', method, url);
-            } else if (this.currentSection === 'albums') {
-                console.log('Album form data being sent:', data);
-                console.log('Album operation:', method, url);
+            if (this.currentSection === "tracks") {
+                console.log("Track form data being sent:", data);
+                console.log("Track operation:", method, url);
+            } else if (this.currentSection === "albums") {
+                console.log("Album form data being sent:", data);
+                console.log("Album operation:", method, url);
             }
-            
+
             const response = await this.makeAuthenticatedRequest(url, {
                 method: method,
                 headers: {
-                    'Content-Type': 'application/json'
+                    "Content-Type": "application/json",
                 },
-                body: JSON.stringify(data)
+                body: JSON.stringify(data),
             });
 
             if (response.ok) {
                 this.showNotification(
-                    `${this.currentSection.slice(0, -1)} ${this.currentEditId ? 'updated' : 'created'} successfully`, 
-                    'success'
+                    `${this.currentSection.slice(0, -1)} ${
+                        this.currentEditId ? "updated" : "created"
+                    } successfully`,
+                    "success"
                 );
                 this.closeModal();
                 this.loadSectionData(this.currentSection);
                 this.loadDashboard(); // Update stats
             } else {
                 const errorData = await response.json();
-                
+
                 // Handle validation errors in admin forms
-                if (errorData.error?.code === 'VALIDATION_ERROR' && errorData.error?.details) {
+                if (
+                    errorData.error?.code === "VALIDATION_ERROR" &&
+                    errorData.error?.details
+                ) {
                     this.showValidationErrorsInForm(errorData.error.details);
-                    throw new Error('Validation failed');
+                    throw new Error("Validation failed");
                 } else {
-                    throw new Error(errorData.error?.message || 'Save failed');
+                    throw new Error(errorData.error?.message || "Save failed");
                 }
             }
         } catch (error) {
-            console.error('Error saving item:', error);
-            
+            console.error("Error saving item:", error);
+
             // Try to parse error response for validation details
-            if (error.message && error.message.includes('Save failed')) {
+            if (error.message && error.message.includes("Save failed")) {
                 // This might be a validation error, try to get more details
-                this.showNotification('Vui lòng kiểm tra lại thông tin đã nhập', 'error');
+                this.showNotification(
+                    "Vui lòng kiểm tra lại thông tin đã nhập",
+                    "error"
+                );
             } else {
-                this.showNotification(error.message || 'Error saving item', 'error');
+                this.showNotification(
+                    error.message || "Error saving item",
+                    "error"
+                );
             }
         }
         this.hideLoading();
@@ -1648,18 +1980,18 @@ class AdminDashboard {
 
     // Show loading spinner
     showLoading() {
-        document.getElementById('loading').classList.add('show');
+        document.getElementById("loading").classList.add("show");
     }
 
     // Hide loading spinner
     hideLoading() {
-        document.getElementById('loading').classList.remove('show');
+        document.getElementById("loading").classList.remove("show");
     }
 
     // Show notification
-    showNotification(message, type = 'info') {
+    showNotification(message, type = "info") {
         // Create notification element
-        const notification = document.createElement('div');
+        const notification = document.createElement("div");
         notification.className = `notification notification-${type}`;
         notification.innerHTML = `
             <div class="notification-content">
@@ -1677,43 +2009,47 @@ class AdminDashboard {
         }, 5000);
 
         // Remove on click
-        notification.querySelector('.notification-close').addEventListener('click', () => {
-            notification.remove();
-        });
+        notification
+            .querySelector(".notification-close")
+            .addEventListener("click", () => {
+                notification.remove();
+            });
     }
 
     // Show validation errors in admin forms
     showValidationErrorsInForm(validationDetails) {
-        let errorMessage = 'Vui lòng kiểm tra lại các trường sau:\n';
-        
-        validationDetails.forEach(detail => {
-            errorMessage += `• ${this.getFieldDisplayName(detail.field)}: ${detail.message}\n`;
+        let errorMessage = "Vui lòng kiểm tra lại các trường sau:\n";
+
+        validationDetails.forEach((detail) => {
+            errorMessage += `• ${this.getFieldDisplayName(detail.field)}: ${
+                detail.message
+            }\n`;
         });
-        
-        this.showNotification(errorMessage.replace(/\n/g, '<br>'), 'error');
+
+        this.showNotification(errorMessage.replace(/\n/g, "<br>"), "error");
     }
 
     // Get display name for fields
     getFieldDisplayName(fieldName) {
         const fieldNames = {
-            'email': 'Email',
-            'username': 'Username', 
-            'password': 'Password',
-            'display_name': 'Display Name',
-            'name': 'Name',
-            'title': 'Title',
-            'bio': 'Bio',
-            'description': 'Description',
-            'release_date': 'Release Date',
-            'duration': 'Duration',
-            'artist_id': 'Artist',
-            'album_id': 'Album',
-            'track_number': 'Track Number',
-            'monthly_listeners': 'Monthly Listeners',
-            'is_verified': 'Verified Status',
-            'is_public': 'Public Status'
+            email: "Email",
+            username: "Username",
+            password: "Password",
+            display_name: "Display Name",
+            name: "Name",
+            title: "Title",
+            bio: "Bio",
+            description: "Description",
+            release_date: "Release Date",
+            duration: "Duration",
+            artist_id: "Artist",
+            album_id: "Album",
+            track_number: "Track Number",
+            monthly_listeners: "Monthly Listeners",
+            is_verified: "Verified Status",
+            is_public: "Public Status",
         };
-        
+
         return fieldNames[fieldName] || fieldName;
     }
 }
@@ -1767,9 +2103,9 @@ const notificationStyles = `
 </style>
 `;
 
-document.head.insertAdjacentHTML('beforeend', notificationStyles);
+document.head.insertAdjacentHTML("beforeend", notificationStyles);
 
 // Initialize the dashboard when the page loads
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener("DOMContentLoaded", () => {
     window.adminDashboard = new AdminDashboard();
-}); 
+});

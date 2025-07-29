@@ -19,7 +19,7 @@ const router = Router();
  *           type: string
  *         description:
  *           type: string
- *         cover_image_url:
+ *         image_url:
  *           type: string
  *           format: uri
  *         is_public:
@@ -57,7 +57,7 @@ const router = Router();
  *         description:
  *           type: string
  *           maxLength: 500
- *         cover_image_url:
+ *         image_url:
  *           type: string
  *           format: uri
  *         is_public:
@@ -328,7 +328,7 @@ router.post('/',
  *               description:
  *                 type: string
  *                 maxLength: 500
- *               cover_image_url:
+ *               image_url:
  *                 type: string
  *                 format: uri
  *               is_public:

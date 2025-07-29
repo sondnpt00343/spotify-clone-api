@@ -1017,7 +1017,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"name\": \"My New Playlist\",\n  \"description\": \"Playlist description\",\n  \"is_public\": true,\n  \"cover_image_url\": \"https://example.com/playlist-cover.jpg\"\n}"
+                            "raw": "{\n  \"name\": \"My New Playlist\",\n  \"description\": \"Playlist description\",\n  \"is_public\": true,\n  \"image_url\": \"https://example.com/playlist-cover.jpg\"\n}"
                         },
                         "url": {
                             "raw": "{{BASE_URL}}/api/playlists",
