@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { UserModel, CreateUserData } from '../models/User';
+import { PlaylistModel } from '../models/Playlist';
 import { generateAccessToken, generateRefreshToken, JwtPayload } from '../utils/jwt';
 import { CustomError } from '../middleware/errorHandler';
 
@@ -34,6 +35,18 @@ export class AuthController {
         password,
         display_name
       });
+
+      // Create default "Liked Songs" playlist for new user
+      try {
+        await PlaylistModel.create(newUser.id, {
+          name: 'Liked Songs',
+          description: 'Your liked songs will appear here',
+          is_public: false
+        });
+      } catch (playlistError) {
+        // Log the error but don't fail the registration process
+        console.error('Error creating default playlist for user:', newUser.id, playlistError);
+      }
 
       // Generate JWT tokens
       const payload: JwtPayload = {

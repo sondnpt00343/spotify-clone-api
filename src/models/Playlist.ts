@@ -191,13 +191,53 @@ export class PlaylistModel {
     }));
   }
 
+  // Generate unique playlist name for user
+  private static async generateUniquePlaylistName(userId: string, originalName: string): Promise<string> {
+    // Extract base name (remove #number suffix if exists)
+    const baseNameMatch = originalName.match(/^(.+?)(?:\s#\d+)?$/);
+    const baseName = baseNameMatch && baseNameMatch[1] ? baseNameMatch[1].trim() : originalName;
+    
+    // Get all playlists for this user that start with the base name
+    const existingPlaylists = await db('playlists')
+      .select('name')
+      .where('user_id', userId)
+      .where('name', 'like', `${baseName}%`);
+    
+    const existingNames = existingPlaylists.map(p => p.name);
+    
+    // If exact base name doesn't exist, use it
+    if (!existingNames.includes(baseName)) {
+      return baseName;
+    }
+    
+    // Find the highest number used
+    let highestNumber = 1;
+    const numberRegex = new RegExp(`^${baseName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:\\s#(\\d+))?$`);
+    
+    for (const name of existingNames) {
+      const match = name.match(numberRegex);
+      if (match) {
+        const number = match[1] ? parseInt(match[1]) : 1; // Base name without number is considered #1
+        if (number > highestNumber) {
+          highestNumber = number;
+        }
+      }
+    }
+    
+    // Return next available number
+    return `${baseName} #${highestNumber + 1}`;
+  }
+
   // Create new playlist
   static async create(userId: string, playlistData: CreatePlaylistData): Promise<Playlist> {
     const id = uuidv4();
     
+    // Generate unique name for this user
+    const uniqueName = await this.generateUniquePlaylistName(userId, playlistData.name);
+    
     const newPlaylist = {
       id,
-      name: playlistData.name,
+      name: uniqueName,
       description: playlistData.description || null,
       image_url: playlistData.image_url || null,
       is_public: playlistData.is_public ?? false,
