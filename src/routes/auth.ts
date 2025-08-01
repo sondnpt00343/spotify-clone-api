@@ -16,14 +16,14 @@ const router = Router();
  *     RegisterRequest:
  *       type: object
  *       required:
- *         - username
  *         - email
  *         - password
  *       properties:
  *         username:
  *           type: string
  *           minLength: 3
- *           maxLength: 30
+ *           maxLength: 50
+ *           nullable: true
  *         email:
  *           type: string
  *           format: email
@@ -32,13 +32,20 @@ const router = Router();
  *           minLength: 6
  *         display_name:
  *           type: string
+ *           maxLength: 100
+ *           nullable: true
  *         bio:
  *           type: string
+ *           maxLength: 500
+ *           nullable: true
  *         date_of_birth:
  *           type: string
  *           format: date
+ *           nullable: true
  *         country:
  *           type: string
+ *           maxLength: 100
+ *           nullable: true
  *     LoginRequest:
  *       type: object
  *       required:
@@ -80,7 +87,7 @@ const authLimiter = rateLimit({
 
 const generalAuthLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 20, // limit each IP to 20 requests per windowMs
+  max: 10000, // limit each IP to 10000 requests per windowMs
   message: {
     error: {
       code: 'RATE_LIMIT_EXCEEDED',

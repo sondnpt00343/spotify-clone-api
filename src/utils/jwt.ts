@@ -4,7 +4,7 @@ import { CustomError } from '../middleware/errorHandler';
 export interface JwtPayload {
   userId: string;
   email: string;
-  username: string;
+  username?: string;
 }
 
 export const generateAccessToken = (payload: JwtPayload): string => {

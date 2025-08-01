@@ -16,12 +16,12 @@ export const registerSchema = Joi.object({
     .alphanum()
     .min(3)
     .max(50)
-    .required()
+    .optional()
+    .allow(null)
     .messages({
       'string.alphanum': 'Username must contain only alphanumeric characters',
       'string.min': 'Username must be at least 3 characters long',
-      'string.max': 'Username must not exceed 50 characters',
-      'any.required': 'Username is required'
+      'string.max': 'Username must not exceed 50 characters'
     }),
     
   password: Joi.string()
@@ -39,8 +39,33 @@ export const registerSchema = Joi.object({
   display_name: Joi.string()
     .max(100)
     .optional()
+    .allow(null)
     .messages({
       'string.max': 'Display name must not exceed 100 characters'
+    }),
+
+  bio: Joi.string()
+    .max(500)
+    .optional()
+    .allow(null)
+    .messages({
+      'string.max': 'Bio must not exceed 500 characters'
+    }),
+
+  date_of_birth: Joi.date()
+    .iso()
+    .optional()
+    .allow(null)
+    .messages({
+      'date.format': 'Date of birth must be in ISO format (YYYY-MM-DD)'
+    }),
+
+  country: Joi.string()
+    .max(100)
+    .optional()
+    .allow(null)
+    .messages({
+      'string.max': 'Country must not exceed 100 characters'
     })
 });
 

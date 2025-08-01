@@ -8,7 +8,11 @@ export class AuthController {
   // POST /api/auth/register
   static async register(req: Request, res: Response, next: NextFunction) {
     try {
-      const { email, username, password, display_name } = req.body as CreateUserData;
+      const { email, username, password, display_name, bio, date_of_birth, country } = req.body as CreateUserData & {
+        bio?: string;
+        date_of_birth?: string;
+        country?: string;
+      };
 
       // Check if email already exists
       const emailExists = await UserModel.emailExists(email);
@@ -19,19 +23,21 @@ export class AuthController {
         throw error;
       }
 
-      // Check if username already exists
-      const usernameExists = await UserModel.usernameExists(username);
-      if (usernameExists) {
-        const error: CustomError = new Error('Username already taken');
-        error.statusCode = 409;
-        error.code = 'USERNAME_EXISTS';
-        throw error;
+      // Check if username already exists (only if username is provided)
+      if (username) {
+        const usernameExists = await UserModel.usernameExists(username);
+        if (usernameExists) {
+          const error: CustomError = new Error('Username already taken');
+          error.statusCode = 409;
+          error.code = 'USERNAME_EXISTS';
+          throw error;
+        }
       }
 
       // Create new user
       const newUser = await UserModel.create({
         email,
-        username,
+        username: username || undefined,
         password,
         display_name
       });

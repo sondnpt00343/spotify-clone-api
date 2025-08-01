@@ -5,7 +5,7 @@ import db from '../config/database';
 export interface User {
   id: string;
   email: string;
-  username: string;
+  username?: string;
   display_name?: string;
   password_hash: string;
   avatar_url?: string;
@@ -15,7 +15,7 @@ export interface User {
 
 export interface CreateUserData {
   email: string;
-  username: string;
+  username?: string;
   password: string;
   display_name?: string;
   avatar_url?: string;
@@ -29,7 +29,7 @@ export interface UpdateUserData {
 export interface UserResponse {
   id: string;
   email: string;
-  username: string;
+  username?: string;
   display_name?: string;
   avatar_url?: string;
   created_at: string;
@@ -63,8 +63,8 @@ export class UserModel {
     const newUser = {
       id,
       email: userData.email,
-      username: userData.username,
-      display_name: userData.display_name || userData.username,
+      username: userData.username || undefined,
+      display_name: userData.display_name || undefined,
       password_hash: hashedPassword,
       avatar_url: userData.avatar_url || undefined,
       created_at: new Date().toISOString(),
@@ -108,6 +108,7 @@ export class UserModel {
 
   // Check if username exists
   static async usernameExists(username: string): Promise<boolean> {
+    if (!username) return false;
     const user = await db('users').where({ username }).first();
     return !!user;
   }
