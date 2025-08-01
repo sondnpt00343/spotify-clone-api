@@ -289,7 +289,7 @@ export class UploadController {
 
       // Update playlist cover path in database (store path, not full URL)
       await PlaylistModel.update(userId, playlistId, {
-        cover_image_url: fileResult.url // This is now a path
+        image_url: fileResult.url // This is now a path
       });
 
       res.status(200).json({
