@@ -79,7 +79,7 @@ const router = Router();
 // Rate limiting
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  max: 10000, // limit each IP to 10000 requests per windowMs
   message: {
     error: {
       code: 'RATE_LIMIT_EXCEEDED',

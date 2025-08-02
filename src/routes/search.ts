@@ -46,7 +46,7 @@ const router = Router();
 // Rate limiting for search endpoints
 const searchLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
-  max: 100, // limit each IP to 100 requests per minute
+  max: 10000, // limit each IP to 10000 requests per minute
   message: {
     error: {
       code: 'SEARCH_RATE_LIMIT_EXCEEDED',
@@ -58,7 +58,7 @@ const searchLimiter = rateLimit({
 // Rate limiting for suggestions (more lenient)
 const suggestionLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
-  max: 200, // limit each IP to 200 requests per minute
+  max: 10000, // limit each IP to 10000 requests per minute
   message: {
     error: {
       code: 'SUGGESTION_RATE_LIMIT_EXCEEDED',

@@ -67,7 +67,7 @@ const router = Router();
 // Rate limiting for upload endpoints
 const uploadLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 30, // limit each IP to 10 uploads per 15 minutes
+  max: 10000, // limit each IP to 10000 uploads per 15 minutes
   message: {
     error: {
       code: 'UPLOAD_RATE_LIMIT_EXCEEDED',
@@ -79,7 +79,7 @@ const uploadLimiter = rateLimit({
 // Rate limiting for file serving (more lenient)
 const serveLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
-  max: 1000, // limit each IP to 1000 requests per minute
+  max: 10000, // limit each IP to 10000 requests per minute
   message: {
     error: {
       code: 'SERVE_RATE_LIMIT_EXCEEDED',

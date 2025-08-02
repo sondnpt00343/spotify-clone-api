@@ -37,7 +37,7 @@ const router = Router();
 // Rate limiting for player endpoints
 const playerLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
-  max: 300, // limit each IP to 300 requests per minute (higher for real-time controls)
+  max: 10000, // limit each IP to 10000 requests per minute (higher for real-time controls)
   message: {
     error: {
       code: 'PLAYER_RATE_LIMIT_EXCEEDED',
