@@ -3,6 +3,15 @@ class AdminDashboard {
     constructor() {
         this.currentSection = "dashboard";
         this.currentEditId = null;
+        
+        // Pagination state
+        this.pagination = {
+            users: { currentPage: 1, limit: 10, total: 0 },
+            artists: { currentPage: 1, limit: 10, total: 0 },
+            albums: { currentPage: 1, limit: 10, total: 0 },
+            tracks: { currentPage: 1, limit: 10, total: 0 },
+            playlists: { currentPage: 1, limit: 10, total: 0 }
+        };
         this.apiBase = "/api";
         this.originalFileUrls = {}; // Track original file URLs for edit mode
         this.hasNewFiles = {}; // Track which files have been changed
@@ -456,12 +465,38 @@ class AdminDashboard {
         this.hideLoading();
     }
 
-    // Load section data
-    async loadSectionData(section) {
+    // Load section data with pagination
+    async loadSectionData(section, page = null) {
         this.showLoading();
         try {
-            const data = await this.fetchData(section);
-            this.renderTable(section, data);
+            // Use current page if not specified
+            const currentPage = page || this.pagination[section].currentPage;
+            const limit = this.pagination[section].limit;
+            const offset = (currentPage - 1) * limit;
+            
+            const data = await this.fetchData(section, limit, offset);
+            
+            // Extract actual data array from different API response formats
+            let actualData;
+            if (data.data) {
+                // Admin endpoints (users, playlists): { data: [...], pagination: {...} }
+                actualData = data.data;
+            } else if (data[section]) {
+                // Public endpoints: { artists: [...], pagination: {...} } or { albums: [...], ... }
+                actualData = data[section];
+            } else if (Array.isArray(data)) {
+                // Fallback: direct array
+                actualData = data;
+            } else {
+                actualData = [];
+            }
+            
+            // Update pagination state
+            this.pagination[section].currentPage = currentPage;
+            this.pagination[section].total = data.pagination?.total || actualData.length || 0;
+            
+            this.renderTable(section, actualData);
+            this.renderPagination(section);
         } catch (error) {
             console.error(`Error loading ${section}:`, error);
             this.showNotification(`Error loading ${section} data`, "error");
@@ -470,7 +505,7 @@ class AdminDashboard {
     }
 
     // Fetch data from API with authentication
-    async fetchData(endpoint) {
+    async fetchData(endpoint, limit = null, offset = null) {
         try {
             let url = `${this.apiBase}/${endpoint}`;
 
@@ -489,24 +524,160 @@ class AdminDashboard {
                 return result.data;
             }
 
+            // Add pagination parameters for non-stats endpoints
+            if (endpoint !== "stats" && limit !== null && offset !== null) {
+                const params = new URLSearchParams();
+                params.append('limit', limit.toString());
+                params.append('offset', offset.toString());
+                url += '?' + params.toString();
+            }
+
             const response = await this.makeAuthenticatedRequest(url);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
             const result = await response.json();
-            return (
-                result.data ||
-                result.artists ||
-                result.albums ||
-                result.tracks ||
-                result.playlists ||
-                result
-            );
+            
+            // Return the full result for pagination info, or just data for stats
+            if (endpoint === "stats") {
+                return result.data;
+            }
+            
+            return result;
         } catch (error) {
             console.error(`Error fetching ${endpoint}:`, error);
             return [];
         }
+    }
+
+    // Render pagination controls
+    renderPagination(section) {
+        const paginationContainer = document.getElementById(`${section}-pagination`);
+        if (!paginationContainer) return;
+
+        const { currentPage, limit, total } = this.pagination[section];
+        const totalPages = Math.ceil(total / limit);
+
+        if (totalPages <= 1) {
+            paginationContainer.innerHTML = '';
+            return;
+        }
+
+        const startItem = (currentPage - 1) * limit + 1;
+        const endItem = Math.min(currentPage * limit, total);
+
+        let paginationHTML = `
+            <button ${currentPage === 1 ? 'disabled' : ''} onclick="adminDashboard.changePage('${section}', 1)">
+                <i class="fas fa-angle-double-left"></i>
+            </button>
+            <button ${currentPage === 1 ? 'disabled' : ''} onclick="adminDashboard.changePage('${section}', ${currentPage - 1})">
+                <i class="fas fa-angle-left"></i>
+            </button>
+        `;
+
+        // Show page numbers (with ellipsis for large page counts)
+        const showPages = this.getPageNumbers(currentPage, totalPages);
+        
+        showPages.forEach(page => {
+            if (page === '...') {
+                paginationHTML += `<span class="page-ellipsis">...</span>`;
+            } else {
+                paginationHTML += `
+                    <button class="${page === currentPage ? 'active' : ''}" 
+                            onclick="adminDashboard.changePage('${section}', ${page})">
+                        ${page}
+                    </button>
+                `;
+            }
+        });
+
+        paginationHTML += `
+            <button ${currentPage === totalPages ? 'disabled' : ''} onclick="adminDashboard.changePage('${section}', ${currentPage + 1})">
+                <i class="fas fa-angle-right"></i>
+            </button>
+            <button ${currentPage === totalPages ? 'disabled' : ''} onclick="adminDashboard.changePage('${section}', ${totalPages})">
+                <i class="fas fa-angle-double-right"></i>
+            </button>
+            
+            <div class="page-info">
+                ${startItem}-${endItem} of ${total}
+            </div>
+            
+            <div class="page-jump">
+                <label>Go to:</label>
+                <input type="number" min="1" max="${totalPages}" value="${currentPage}" 
+                       onchange="adminDashboard.changePage('${section}', this.value)" 
+                       onkeypress="if(event.key==='Enter') adminDashboard.changePage('${section}', this.value)">
+            </div>
+        `;
+
+        paginationContainer.innerHTML = paginationHTML;
+    }
+
+    // Get page numbers to display (with ellipsis)
+    getPageNumbers(currentPage, totalPages) {
+        const pages = [];
+        const maxVisible = 7; // Maximum visible page numbers
+
+        if (totalPages <= maxVisible) {
+            // Show all pages
+            for (let i = 1; i <= totalPages; i++) {
+                pages.push(i);
+            }
+        } else {
+            // Always show first page
+            pages.push(1);
+
+            if (currentPage > 4) {
+                pages.push('...');
+            }
+
+            // Show pages around current page
+            const start = Math.max(2, currentPage - 1);
+            const end = Math.min(totalPages - 1, currentPage + 1);
+
+            for (let i = start; i <= end; i++) {
+                if (!pages.includes(i)) {
+                    pages.push(i);
+                }
+            }
+
+            if (currentPage < totalPages - 3) {
+                pages.push('...');
+            }
+
+            // Always show last page
+            if (!pages.includes(totalPages)) {
+                pages.push(totalPages);
+            }
+        }
+
+        return pages;
+    }
+
+    // Change page
+    changePage(section, page) {
+        const totalPages = Math.ceil(this.pagination[section].total / this.pagination[section].limit);
+        
+        if (page < 1 || page > totalPages) return;
+        
+        this.loadSectionData(section, page);
+    }
+
+    // Jump to specific page
+    jumpToPage(section, page) {
+        const pageNum = parseInt(page);
+        const totalPages = Math.ceil(this.pagination[section].total / this.pagination[section].limit);
+        
+        if (isNaN(pageNum) || pageNum < 1 || pageNum > totalPages) {
+            // Reset input to current page
+            const input = event.target;
+            input.value = this.pagination[section].currentPage;
+            return;
+        }
+        
+        this.changePage(section, pageNum);
     }
 
     // Render table for a section

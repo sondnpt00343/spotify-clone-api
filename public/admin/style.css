@@ -714,7 +714,112 @@ body {
     }
 }
 
+/* Pagination Styles */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    padding: 20px 0;
+    margin-top: 20px;
+    border-top: 1px solid #eee;
+}
+
+.pagination button {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    background: white;
+    color: #333;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    min-width: 36px;
+}
+
+.pagination button:hover:not(:disabled) {
+    background: #f8f9fa;
+    border-color: #007bff;
+    color: #007bff;
+}
+
+.pagination button:disabled {
+    background: #f8f9fa;
+    color: #999;
+    cursor: not-allowed;
+    border-color: #e9ecef;
+}
+
+.pagination button.active {
+    background: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+.pagination button.active:hover {
+    background: #0056b3;
+    border-color: #0056b3;
+}
+
+.pagination .page-info {
+    font-size: 14px;
+    color: #666;
+    margin: 0 10px;
+    white-space: nowrap;
+}
+
+.pagination .page-jump {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-left: 10px;
+}
+
+.pagination .page-jump input {
+    width: 60px;
+    padding: 6px 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    text-align: center;
+    font-size: 14px;
+}
+
+.pagination .page-jump label {
+    font-size: 14px;
+    color: #666;
+}
+
 @media (max-width: 768px) {
+    /* Responsive pagination */
+    .pagination {
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+    
+    .pagination button {
+        padding: 6px 8px;
+        font-size: 12px;
+        min-width: 30px;
+    }
+    
+    .pagination .page-info {
+        font-size: 12px;
+        margin: 0 5px;
+    }
+    
+    .pagination .page-jump {
+        order: 1;
+        width: 100%;
+        justify-content: center;
+        margin-top: 10px;
+        margin-left: 0;
+    }
+    
+    .pagination .page-jump input {
+        width: 50px;
+        font-size: 12px;
+    }
+
     .sidebar {
         width: 100%;
         height: auto;
