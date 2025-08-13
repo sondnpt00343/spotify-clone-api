@@ -1,0 +1,2961 @@
+{
+    "info": {
+        "name": "Spotify Clone API",
+        "description": "Complete API collection for Spotify Clone with authentication, search, player controls, and file uploads",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+        "_postman_id": "spotify-clone-api-collection"
+    },
+    "variable": [
+        {
+            "key": "BASE_URL",
+            "value": "http://localhost:3000",
+            "type": "string"
+        },
+        {
+            "key": "access_token",
+            "value": "",
+            "type": "string"
+        }
+    ],
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{access_token}}",
+                "type": "string"
+            }
+        ]
+    },
+    "event": [
+        {
+            "listen": "prerequest",
+            "script": {
+                "type": "text/javascript",
+                "exec": [""]
+            }
+        },
+        {
+            "listen": "test",
+            "script": {
+                "type": "text/javascript",
+                "exec": [""]
+            }
+        }
+    ],
+    "item": [
+        {
+            "name": "Authentication",
+            "item": [
+                {
+                    "name": "Register User",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"username\": \"testuser\",\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\",\n  \"display_name\": \"Test User\",\n  \"bio\": \"Test bio\",\n  \"country\": \"US\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/auth/register",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "auth", "register"]
+                        }
+                    }
+                },
+                {
+                    "name": "Login User",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    const response = pm.response.json();",
+                                    "    if (response.tokens && response.tokens.access_token) {",
+                                    "        pm.collectionVariables.set('access_token', response.tokens.access_token);",
+                                    "    }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/auth/login",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "auth", "login"]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Current User",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/users/me",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "users", "me"]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Profile",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"display_name\": \"Updated Name\",\n  \"bio\": \"Updated bio\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/users/me",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "users", "me"]
+                        }
+                    }
+                },
+                {
+                    "name": "Change Password",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"current_password\": \"password123\",\n  \"new_password\": \"newpassword123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/auth/change-password",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "auth", "change-password"]
+                        }
+                    }
+                },
+                {
+                    "name": "Refresh Token",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    const response = pm.response.json();",
+                                    "    if (response.tokens && response.tokens.access_token) {",
+                                    "        pm.collectionVariables.set('access_token', response.tokens.access_token);",
+                                    "    }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/auth/refresh-token",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "auth", "refresh-token"]
+                        }
+                    }
+                },
+                {
+                    "name": "Get User's Liked Tracks",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/me/tracks/liked?limit=20&offset=0",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "me", "tracks", "liked"],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "20"
+                                },
+                                {
+                                    "key": "offset",
+                                    "value": "0"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Recently Played Tracks",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/me/player/recently-played?limit=20",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "me", "player", "recently-played"],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "20"
+                                },
+                                {
+                                    "key": "after",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "before",
+                                    "value": "",
+                                    "disabled": true
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get User's Followed Playlists",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/me/playlists/followed?limit=20&offset=0",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "me", "playlists", "followed"],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "20"
+                                },
+                                {
+                                    "key": "offset",
+                                    "value": "0"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get User's Liked Albums",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/me/albums/liked?limit=20&offset=0",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "me", "albums", "liked"],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "20"
+                                },
+                                {
+                                    "key": "offset",
+                                    "value": "0"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Artists",
+            "item": [
+                {
+                    "name": "Get All Artists",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/artists?limit=20&offset=0",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "artists"],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "20"
+                                },
+                                {
+                                    "key": "offset",
+                                    "value": "0"
+                                },
+                                {
+                                    "key": "search",
+                                    "value": "",
+                                    "disabled": true
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Trending Artists",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/artists/trending?limit=20",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "artists", "trending"],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "20"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Artist by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/artists/:artistId",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "artists", ":artistId"],
+                            "variable": [
+                                {
+                                    "key": "artistId",
+                                    "value": "artist-uuid-here"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Artist",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"New Artist\",\n  \"bio\": \"Artist biography\",\n  \"image_url\": \"https://example.com/artist.jpg\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/artists",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "artists"]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Artist",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"Updated Artist Name\",\n  \"bio\": \"Updated biography\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/artists/:artistId",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "artists", ":artistId"],
+                            "variable": [
+                                {
+                                    "key": "artistId",
+                                    "value": "artist-uuid-here"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Delete Artist",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/artists/:artistId",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "artists", ":artistId"],
+                            "variable": [
+                                {
+                                    "key": "artistId",
+                                    "value": "artist-uuid-here"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Follow Artist",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/artists/:artistId/follow",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "artists", ":artistId", "follow"],
+                            "variable": [
+                                {
+                                    "key": "artistId",
+                                    "value": "artist-uuid-here"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Unfollow Artist",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/artists/:artistId/follow",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "artists", ":artistId", "follow"],
+                            "variable": [
+                                {
+                                    "key": "artistId",
+                                    "value": "artist-uuid-here"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Artist Albums",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/artists/:artistId/albums",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "artists", ":artistId", "albums"],
+                            "variable": [
+                                {
+                                    "key": "artistId",
+                                    "value": "artist-uuid-here"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Artist Popular Tracks",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/artists/:artistId/tracks/popular",
+                            "host": ["{{BASE_URL}}"],
+                            "path": [
+                                "api",
+                                "artists",
+                                ":artistId",
+                                "tracks",
+                                "popular"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "artistId",
+                                    "value": "artist-uuid-here"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Albums",
+            "item": [
+                {
+                    "name": "Get All Albums",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/albums?limit=20&offset=0",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "albums"],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "20"
+                                },
+                                {
+                                    "key": "offset",
+                                    "value": "0"
+                                },
+                                {
+                                    "key": "search",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "artist_id",
+                                    "value": "",
+                                    "disabled": true
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Popular Albums",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/albums/popular?limit=20",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "albums", "popular"],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "20"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get New Releases",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/albums/new-releases?limit=20",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "albums", "new-releases"],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "20"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Album by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/albums/:albumId",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "albums", ":albumId"],
+                            "variable": [
+                                {
+                                    "key": "albumId",
+                                    "value": "album-uuid-here"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Album",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"title\": \"New Album\",\n  \"artist_id\": \"artist-uuid-here\",\n  \"release_date\": \"2024-01-01\",\n  \"description\": \"Album description\",\n  \"cover_image_url\": \"https://example.com/album-cover.jpg\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/albums",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "albums"]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Album",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"title\": \"Updated Album Title\",\n  \"description\": \"Updated description\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/albums/:albumId",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "albums", ":albumId"],
+                            "variable": [
+                                {
+                                    "key": "albumId",
+                                    "value": "album-uuid-here"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Delete Album",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/albums/:albumId",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "albums", ":albumId"],
+                            "variable": [
+                                {
+                                    "key": "albumId",
+                                    "value": "album-uuid-here"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Album Tracks",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/albums/:albumId/tracks",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "albums", ":albumId", "tracks"],
+                            "variable": [
+                                {
+                                    "key": "albumId",
+                                    "value": "album-uuid-here"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Like Album",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/albums/:albumId/like",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "albums", ":albumId", "like"],
+                            "variable": [
+                                {
+                                    "key": "albumId",
+                                    "value": "album-uuid-here"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Unlike Album",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/albums/:albumId/like",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "albums", ":albumId", "like"],
+                            "variable": [
+                                {
+                                    "key": "albumId",
+                                    "value": "album-uuid-here"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Tracks",
+            "item": [
+                {
+                    "name": "Get All Tracks",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/tracks?limit=20&offset=0",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "tracks"],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "20"
+                                },
+                                {
+                                    "key": "offset",
+                                    "value": "0"
+                                },
+                                {
+                                    "key": "search",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "artist_id",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "album_id",
+                                    "value": "",
+                                    "disabled": true
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Popular Tracks",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/tracks/popular?limit=20",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "tracks", "popular"],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "20"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Trending Tracks",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/tracks/trending?limit=20",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "tracks", "trending"],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "20"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Track by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/tracks/:trackId",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "tracks", ":trackId"],
+                            "variable": [
+                                {
+                                    "key": "trackId",
+                                    "value": "track-uuid-here"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Play Track",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/tracks/:trackId/play",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "tracks", ":trackId", "play"],
+                            "variable": [
+                                {
+                                    "key": "trackId",
+                                    "value": "track-uuid-here"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Track",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"title\": \"New Track\",\n  \"artist_id\": \"artist-uuid-here\",\n  \"album_id\": \"album-uuid-here\",\n  \"duration\": 180,\n  \"track_number\": 1,\n  \"audio_url\": \"https://example.com/track.mp3\",\n  \"image_url\": \"https://example.com/track-cover.jpg\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/tracks",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "tracks"]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Track",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"title\": \"Updated Track Title\",\n  \"duration\": 200\n}"
+                        },
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/tracks/:trackId",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "tracks", ":trackId"],
+                            "variable": [
+                                {
+                                    "key": "trackId",
+                                    "value": "track-uuid-here"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Delete Track",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/tracks/:trackId",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "tracks", ":trackId"],
+                            "variable": [
+                                {
+                                    "key": "trackId",
+                                    "value": "track-uuid-here"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Like Track",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/tracks/:trackId/like",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "tracks", ":trackId", "like"],
+                            "variable": [
+                                {
+                                    "key": "trackId",
+                                    "value": "track-uuid-here"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Unlike Track",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/tracks/:trackId/like",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "tracks", ":trackId", "like"],
+                            "variable": [
+                                {
+                                    "key": "trackId",
+                                    "value": "track-uuid-here"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Playlists",
+            "item": [
+                {
+                    "name": "Get All Playlists",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/playlists?limit=20&offset=0",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "playlists"],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "20"
+                                },
+                                {
+                                    "key": "offset",
+                                    "value": "0"
+                                },
+                                {
+                                    "key": "search",
+                                    "value": "",
+                                    "disabled": true
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get My Playlists",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/me/playlists",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "me", "playlists"]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Playlist by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/playlists/:playlistId",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "playlists", ":playlistId"],
+                            "variable": [
+                                {
+                                    "key": "playlistId",
+                                    "value": "playlist-uuid-here"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Playlist",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"My New Playlist\",\n  \"description\": \"Playlist description\",\n  \"is_public\": true,\n  \"image_url\": \"https://example.com/playlist-cover.jpg\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/playlists",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "playlists"]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Playlist",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"Updated Playlist Name\",\n  \"description\": \"Updated description\",\n  \"is_public\": false\n}"
+                        },
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/playlists/:playlistId",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "playlists", ":playlistId"],
+                            "variable": [
+                                {
+                                    "key": "playlistId",
+                                    "value": "playlist-uuid-here"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Delete Playlist",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/playlists/:playlistId",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "playlists", ":playlistId"],
+                            "variable": [
+                                {
+                                    "key": "playlistId",
+                                    "value": "playlist-uuid-here"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Playlist Tracks",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/playlists/:playlistId/tracks",
+                            "host": ["{{BASE_URL}}"],
+                            "path": [
+                                "api",
+                                "playlists",
+                                ":playlistId",
+                                "tracks"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "playlistId",
+                                    "value": "playlist-uuid-here"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Add Track to Playlist",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"track_id\": \"track-uuid-here\",\n  \"position\": 0\n}"
+                        },
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/playlists/:playlistId/tracks",
+                            "host": ["{{BASE_URL}}"],
+                            "path": [
+                                "api",
+                                "playlists",
+                                ":playlistId",
+                                "tracks"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "playlistId",
+                                    "value": "playlist-uuid-here"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Remove Track from Playlist",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/playlists/:playlistId/tracks/:trackId",
+                            "host": ["{{BASE_URL}}"],
+                            "path": [
+                                "api",
+                                "playlists",
+                                ":playlistId",
+                                "tracks",
+                                ":trackId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "playlistId",
+                                    "value": "playlist-uuid-here"
+                                },
+                                {
+                                    "key": "trackId",
+                                    "value": "track-uuid-here"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Reorder Track Position",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"new_position\": 2\n}"
+                        },
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/playlists/:playlistId/tracks/:trackId/position",
+                            "host": ["{{BASE_URL}}"],
+                            "path": [
+                                "api",
+                                "playlists",
+                                ":playlistId",
+                                "tracks",
+                                ":trackId",
+                                "position"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "playlistId",
+                                    "value": "playlist-uuid-here"
+                                },
+                                {
+                                    "key": "trackId",
+                                    "value": "track-uuid-here"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Follow Playlist",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/playlists/:playlistId/follow",
+                            "host": ["{{BASE_URL}}"],
+                            "path": [
+                                "api",
+                                "playlists",
+                                ":playlistId",
+                                "follow"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "playlistId",
+                                    "value": "playlist-uuid-here"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Unfollow Playlist",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/playlists/:playlistId/follow",
+                            "host": ["{{BASE_URL}}"],
+                            "path": [
+                                "api",
+                                "playlists",
+                                ":playlistId",
+                                "follow"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "playlistId",
+                                    "value": "playlist-uuid-here"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Search",
+            "item": [
+                {
+                    "name": "Universal Search",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/search?q=search-term&type=all&limit=20&offset=0",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "search"],
+                            "query": [
+                                {
+                                    "key": "q",
+                                    "value": "search-term"
+                                },
+                                {
+                                    "key": "type",
+                                    "value": "all",
+                                    "description": "all, track, artist, album, playlist"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "20"
+                                },
+                                {
+                                    "key": "offset",
+                                    "value": "0"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Search Tracks",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/search?q=track-name&type=track&limit=10",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "search"],
+                            "query": [
+                                {
+                                    "key": "q",
+                                    "value": "track-name"
+                                },
+                                {
+                                    "key": "type",
+                                    "value": "track"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Search Artists",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/search?q=artist-name&type=artist&limit=10",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "search"],
+                            "query": [
+                                {
+                                    "key": "q",
+                                    "value": "artist-name"
+                                },
+                                {
+                                    "key": "type",
+                                    "value": "artist"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Search Albums",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/search?q=album-name&type=album&limit=10",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "search"],
+                            "query": [
+                                {
+                                    "key": "q",
+                                    "value": "album-name"
+                                },
+                                {
+                                    "key": "type",
+                                    "value": "album"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Search Playlists",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/search?q=playlist-name&type=playlist&limit=10",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "search"],
+                            "query": [
+                                {
+                                    "key": "q",
+                                    "value": "playlist-name"
+                                },
+                                {
+                                    "key": "type",
+                                    "value": "playlist"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Search Suggestions",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/search/suggestions?q=search-term&limit=5",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "search", "suggestions"],
+                            "query": [
+                                {
+                                    "key": "q",
+                                    "value": "search-term"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "5"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Quick Search",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/search/quick?q=search-term&limit=10",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "search", "quick"],
+                            "query": [
+                                {
+                                    "key": "q",
+                                    "value": "search-term"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Trending Searches",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/search/trending?limit=10",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "search", "trending"],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Search Tracks Only",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/search/tracks?q=track-name&limit=20",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "search", "tracks"],
+                            "query": [
+                                {
+                                    "key": "q",
+                                    "value": "track-name"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "20"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Search Artists Only",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/search/artists?q=artist-name&limit=20",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "search", "artists"],
+                            "query": [
+                                {
+                                    "key": "q",
+                                    "value": "artist-name"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "20"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Search Albums Only",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/search/albums?q=album-name&limit=20",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "search", "albums"],
+                            "query": [
+                                {
+                                    "key": "q",
+                                    "value": "album-name"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "20"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Search Playlists Only",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/search/playlists?q=playlist-name&limit=20",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "search", "playlists"],
+                            "query": [
+                                {
+                                    "key": "q",
+                                    "value": "playlist-name"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "20"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Player",
+            "item": [
+                {
+                    "name": "Get Current Playback",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/me/player",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "me", "player"]
+                        }
+                    }
+                },
+                {
+                    "name": "Start/Resume Playback",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"track_id\": \"track-uuid-here\",\n  \"context_type\": \"album\",\n  \"context_id\": \"album-uuid-here\",\n  \"position_ms\": 0,\n  \"volume_percent\": 80,\n  \"device_name\": \"Web Player\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/me/player/play",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "me", "player", "play"]
+                        }
+                    }
+                },
+                {
+                    "name": "Pause Playback",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/me/player/pause",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "me", "player", "pause"]
+                        }
+                    }
+                },
+                {
+                    "name": "Next Track",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/me/player/next",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "me", "player", "next"]
+                        }
+                    }
+                },
+                {
+                    "name": "Previous Track",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/me/player/previous",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "me", "player", "previous"]
+                        }
+                    }
+                },
+                {
+                    "name": "Seek to Position",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"position_ms\": 30000\n}"
+                        },
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/me/player/seek",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "me", "player", "seek"]
+                        }
+                    }
+                },
+                {
+                    "name": "Set Volume",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"volume_percent\": 50\n}"
+                        },
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/me/player/volume",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "me", "player", "volume"]
+                        }
+                    }
+                },
+                {
+                    "name": "Toggle Shuffle",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"state\": true\n}"
+                        },
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/me/player/shuffle",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "me", "player", "shuffle"]
+                        }
+                    }
+                },
+                {
+                    "name": "Set Repeat Mode",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"state\": \"track\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/me/player/repeat",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "me", "player", "repeat"]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Queue",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/me/player/queue",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "me", "player", "queue"]
+                        }
+                    }
+                },
+                {
+                    "name": "Add to Queue",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"track_id\": \"track-uuid-here\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/me/player/queue",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "me", "player", "queue"]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Recently Played",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/me/player/recently-played?limit=20",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "me", "player", "recently-played"],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "20"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Remove Item from Queue",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/me/player/queue/:queueItemId",
+                            "host": ["{{BASE_URL}}"],
+                            "path": [
+                                "api",
+                                "me",
+                                "player",
+                                "queue",
+                                ":queueItemId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "queueItemId",
+                                    "value": "queue-item-id-here"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Clear Queue",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/me/player/queue",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "me", "player", "queue"]
+                        }
+                    }
+                },
+                {
+                    "name": "Set Playback Device",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"device_name\": \"Web Player\",\n  \"force_transfer\": false\n}"
+                        },
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/me/player/device",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "me", "player", "device"]
+                        }
+                    }
+                },
+                {
+                    "name": "Stop Playback",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/me/player",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "me", "player"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Upload",
+            "item": [
+                {
+                    "name": "Upload Avatar",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "avatar",
+                                    "type": "file",
+                                    "src": ""
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/upload/avatar",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "upload", "avatar"]
+                        }
+                    }
+                },
+                {
+                    "name": "Upload Cover Image",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "cover",
+                                    "type": "file",
+                                    "src": ""
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/upload/cover",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "upload", "cover"]
+                        }
+                    }
+                },
+                {
+                    "name": "Upload Audio File",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "audio",
+                                    "type": "file",
+                                    "src": ""
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/upload/audio",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "upload", "audio"]
+                        }
+                    }
+                },
+                {
+                    "name": "Upload Multiple Images",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "images",
+                                    "type": "file",
+                                    "src": ""
+                                },
+                                {
+                                    "key": "images",
+                                    "type": "file",
+                                    "src": ""
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/upload/images",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "upload", "images"]
+                        }
+                    }
+                },
+                {
+                    "name": "Get File Info",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/upload/files/:filename",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "upload", "files", ":filename"],
+                            "variable": [
+                                {
+                                    "key": "filename",
+                                    "value": "example.jpg"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "List Uploaded Files",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/upload/files?type=image&limit=20",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "upload", "files"],
+                            "query": [
+                                {
+                                    "key": "type",
+                                    "value": "image",
+                                    "description": "image, audio, or omit for all"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "20"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Upload Artist Image",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "image",
+                                    "type": "file",
+                                    "src": ""
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/upload/artist/:artistId/image",
+                            "host": ["{{BASE_URL}}"],
+                            "path": [
+                                "api",
+                                "upload",
+                                "artist",
+                                ":artistId",
+                                "image"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "artistId",
+                                    "value": "artist-uuid-here"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Upload Artist Background",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "background",
+                                    "type": "file",
+                                    "src": ""
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/upload/artist/:artistId/background",
+                            "host": ["{{BASE_URL}}"],
+                            "path": [
+                                "api",
+                                "upload",
+                                "artist",
+                                ":artistId",
+                                "background"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "artistId",
+                                    "value": "artist-uuid-here"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Upload Album Cover",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "cover",
+                                    "type": "file",
+                                    "src": ""
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/upload/album/:albumId/cover",
+                            "host": ["{{BASE_URL}}"],
+                            "path": [
+                                "api",
+                                "upload",
+                                "album",
+                                ":albumId",
+                                "cover"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "albumId",
+                                    "value": "album-uuid-here"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Upload Playlist Cover",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "cover",
+                                    "type": "file",
+                                    "src": ""
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/upload/playlist/:playlistId/cover",
+                            "host": ["{{BASE_URL}}"],
+                            "path": [
+                                "api",
+                                "upload",
+                                "playlist",
+                                ":playlistId",
+                                "cover"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "playlistId",
+                                    "value": "playlist-uuid-here"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Upload Track Audio",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "audio",
+                                    "type": "file",
+                                    "src": ""
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/upload/track/:trackId/audio",
+                            "host": ["{{BASE_URL}}"],
+                            "path": [
+                                "api",
+                                "upload",
+                                "track",
+                                ":trackId",
+                                "audio"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "trackId",
+                                    "value": "track-uuid-here"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Upload Track Image",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "image",
+                                    "type": "file",
+                                    "src": ""
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/upload/track/:trackId/image",
+                            "host": ["{{BASE_URL}}"],
+                            "path": [
+                                "api",
+                                "upload",
+                                "track",
+                                ":trackId",
+                                "image"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "trackId",
+                                    "value": "track-uuid-here"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Serve Uploaded File",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/upload/serve/:type/:filename",
+                            "host": ["{{BASE_URL}}"],
+                            "path": [
+                                "api",
+                                "upload",
+                                "serve",
+                                ":type",
+                                ":filename"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "type",
+                                    "value": "images"
+                                },
+                                {
+                                    "key": "filename",
+                                    "value": "example.jpg"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Delete File",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/upload/files/:filename",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "upload", "files", ":filename"],
+                            "variable": [
+                                {
+                                    "key": "filename",
+                                    "value": "example.jpg"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Admin",
+            "item": [
+                {
+                    "name": "Get All Users",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/admin/users?limit=20&offset=0",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "admin", "users"],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "20"
+                                },
+                                {
+                                    "key": "offset",
+                                    "value": "0"
+                                },
+                                {
+                                    "key": "search",
+                                    "value": "",
+                                    "disabled": true
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get User by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/admin/users/:userId",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "admin", "users", ":userId"],
+                            "variable": [
+                                {
+                                    "key": "userId",
+                                    "value": "user-uuid-here"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Update User",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"display_name\": \"Updated Name\",\n  \"avatar_url\": \"https://example.com/avatar.jpg\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/admin/users/:userId",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "admin", "users", ":userId"],
+                            "variable": [
+                                {
+                                    "key": "userId",
+                                    "value": "user-uuid-here"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Delete User",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/admin/users/:userId",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "admin", "users", ":userId"],
+                            "variable": [
+                                {
+                                    "key": "userId",
+                                    "value": "user-uuid-here"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Dashboard Stats",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/admin/stats",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "admin", "stats"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Health & Info",
+            "item": [
+                {
+                    "name": "Health Check",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{BASE_URL}}/health",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["health"]
+                        }
+                    }
+                },
+                {
+                    "name": "API Info",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api"]
+                        }
+                    }
+                }
+            ]
+                },
+                {
+            "name": "Player Controls",
+            "item": [
+                {
+                    "name": "Get Current Playback",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/me/player",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "me", "player"]
+                        }
+                    }
+                },
+                {
+                    "name": "Start/Resume Playback",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"track_id\": \"track-uuid-here\",\n  \"context_type\": \"playlist\",\n  \"context_id\": \"playlist-uuid-here\",\n  \"position_ms\": 0,\n  \"volume_percent\": 80\n}"
+                        },
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/me/player/play",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "me", "player", "play"]
+                        }
+                    }
+                },
+                {
+                    "name": "Pause Playback",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/me/player/pause",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "me", "player", "pause"]
+                        }
+                    }
+                },
+                {
+                    "name": "Skip to Next Track",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/me/player/next",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "me", "player", "next"]
+                        }
+                    }
+                },
+                {
+                    "name": "Skip to Previous Track",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/me/player/previous",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "me", "player", "previous"]
+                        }
+                    }
+                },
+                {
+                    "name": "Seek to Position",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"position_ms\": 30000\n}"
+                        },
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/me/player/seek",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "me", "player", "seek"]
+                        }
+                    }
+                },
+                {
+                    "name": "Set Volume",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"volume_percent\": 50\n}"
+                        },
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/me/player/volume",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "me", "player", "volume"]
+                        }
+                    }
+                },
+                {
+                    "name": "Toggle Shuffle",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"state\": true\n}"
+                        },
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/me/player/shuffle",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "me", "player", "shuffle"]
+                        }
+                    }
+                },
+                {
+                    "name": "Set Repeat Mode",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"state\": \"context\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/me/player/repeat",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "me", "player", "repeat"]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Queue",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/me/player/queue?limit=20&offset=0",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "me", "player", "queue"],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "20"
+                                },
+                                {
+                                    "key": "offset",
+                                    "value": "0"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Add to Queue",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"track_id\": \"track-uuid-here\",\n  \"position\": 0\n}"
+                        },
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/me/player/queue",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "me", "player", "queue"]
+                        }
+                    }
+                },
+                {
+                    "name": "Remove from Queue",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/me/player/queue/:queueItemId",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "me", "player", "queue", ":queueItemId"],
+                            "variable": [
+                                {
+                                    "key": "queueItemId",
+                                    "value": "queue-item-uuid-here"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Clear Queue",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/me/player/queue",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "me", "player", "queue"]
+                        }
+                    }
+                },
+                {
+                    "name": "Transfer Playback",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"device_name\": \"Mobile App\",\n  \"play\": true\n}"
+                        },
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/me/player/device",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "me", "player", "device"]
+                        }
+                    }
+                },
+                {
+                    "name": "Stop Playback",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{BASE_URL}}/api/me/player",
+                            "host": ["{{BASE_URL}}"],
+                            "path": ["api", "me", "player"]
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}

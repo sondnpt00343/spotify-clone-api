@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotify Clone - Admin Dashboard</title>
+    <link rel="stylesheet" href="/static/admin/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-music"></i> Admin Panel</h2>
+            </div>
+            <ul class="sidebar-menu">
+                <li class="menu-item active" data-section="dashboard">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </li>
+                <li class="menu-item" data-section="users">
+                    <i class="fas fa-users"></i>
+                    <span>Users</span>
+                </li>
+                <li class="menu-item" data-section="artists">
+                    <i class="fas fa-microphone"></i>
+                    <span>Artists</span>
+                </li>
+                <li class="menu-item" data-section="albums">
+                    <i class="fas fa-compact-disc"></i>
+                    <span>Albums</span>
+                </li>
+                <li class="menu-item" data-section="tracks">
+                    <i class="fas fa-music"></i>
+                    <span>Tracks</span>
+                </li>
+                <li class="menu-item" data-section="playlists">
+                    <i class="fas fa-list"></i>
+                    <span>Playlists</span>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="content-header">
+                <div class="header-left">
+                    <h1 id="page-title">Dashboard</h1>
+                </div>
+                <div class="header-right">
+                    <div class="header-actions">
+                        <button class="btn btn-primary" id="add-new-btn" style="display: none;">
+                            <i class="fas fa-plus"></i>
+                            <span>Add New</span>
+                        </button>
+                    </div>
+                    <div class="user-section">
+                        <div class="user-info" id="user-info">
+                            <div class="user-avatar">
+                                <i class="fas fa-user-circle"></i>
+                            </div>
+                            <div class="user-details">
+                                <span class="user-name" id="user-name">Admin</span>
+                                <span class="user-role">Administrator</span>
+                            </div>
+                        </div>
+                        <div class="user-menu">
+                            <button class="btn btn-outline logout-btn" id="logout-btn">
+                                <i class="fas fa-sign-out-alt"></i>
+                                <span>Đăng xuất</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="content-body">
+                <!-- Dashboard Section -->
+                <section id="dashboard-section" class="content-section active">
+                    <div class="dashboard-stats">
+                        <div class="stat-card">
+                            <div class="stat-icon users">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="total-users">-</h3>
+                                <p>Total Users</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon artists">
+                                <i class="fas fa-microphone"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="total-artists">-</h3>
+                                <p>Total Artists</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon albums">
+                                <i class="fas fa-compact-disc"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="total-albums">-</h3>
+                                <p>Total Albums</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon tracks">
+                                <i class="fas fa-music"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="total-tracks">-</h3>
+                                <p>Total Tracks</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon playlists">
+                                <i class="fas fa-list"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="total-playlists">-</h3>
+                                <p>Total Playlists</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Users Section -->
+                <section id="users-section" class="content-section">
+                    <div class="table-container">
+                        <table id="users-table" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Avatar</th>
+                                    <th>Email</th>
+                                    <th>Username</th>
+                                    <th>Display Name</th>
+                                    <th>Created At</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Artists Section -->
+                <section id="artists-section" class="content-section">
+                    <div class="table-container">
+                        <table id="artists-table" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Image</th>
+                                    <th>Name</th>
+                                    <th>Monthly Listeners</th>
+                                    <th>Verified</th>
+                                    <th>Created At</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Albums Section -->
+                <section id="albums-section" class="content-section">
+                    <div class="table-container">
+                        <table id="albums-table" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Cover</th>
+                                    <th>Title</th>
+                                    <th>Artist</th>
+                                    <th>Release Date</th>
+                                    <th>Total Tracks</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Tracks Section -->
+                <section id="tracks-section" class="content-section">
+                    <div class="table-container">
+                        <table id="tracks-table" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Image</th>
+                                    <th>Title</th>
+                                    <th>Artist</th>
+                                    <th>Album</th>
+                                    <th>Duration</th>
+                                    <th>Play Count</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Playlists Section -->
+                <section id="playlists-section" class="content-section">
+                    <div class="table-container">
+                        <table id="playlists-table" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Cover</th>
+                                    <th>Name</th>
+                                    <th>Owner</th>
+                                    <th>Public</th>
+                                    <th>Total Tracks</th>
+                                    <th>Created At</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal for Add/Edit -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">Add New Item</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="modal-form">
+                    <div id="form-fields"></div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" id="cancel-btn">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="save-btn">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div id="loading" class="loading">
+        <div class="spinner"></div>
+    </div>
+
+    <script src="/static/admin/script.js"></script>
+</body>
+</html> 
