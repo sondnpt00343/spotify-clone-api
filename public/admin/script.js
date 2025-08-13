@@ -332,8 +332,14 @@ class AdminDashboard {
             if (!wasAlreadyInSection || !hasExistingData) {
                 this.loadSectionData(section);
             }
-        } else if (!wasAlreadyInSection) {
-            this.loadDashboard();
+        } else {
+            // For dashboard, check if stats data is already loaded
+            const totalUsersElement = document.getElementById("total-users");
+            const hasStatsData = totalUsersElement && totalUsersElement.textContent !== '-';
+            
+            if (!wasAlreadyInSection || !hasStatsData) {
+                this.loadDashboard();
+            }
         }
 
         // Handle pending modal action after section load
@@ -476,20 +482,8 @@ class AdminDashboard {
             
             const data = await this.fetchData(section, limit, offset);
             
-            // Extract actual data array from different API response formats
-            let actualData;
-            if (data.data) {
-                // Admin endpoints (users, playlists): { data: [...], pagination: {...} }
-                actualData = data.data;
-            } else if (data[section]) {
-                // Public endpoints: { artists: [...], pagination: {...} } or { albums: [...], ... }
-                actualData = data[section];
-            } else if (Array.isArray(data)) {
-                // Fallback: direct array
-                actualData = data;
-            } else {
-                actualData = [];
-            }
+            // Extract actual data array using helper method
+            const actualData = this.extractDataArray(data, section);
             
             // Update pagination state
             this.pagination[section].currentPage = currentPage;
@@ -547,6 +541,23 @@ class AdminDashboard {
             return result;
         } catch (error) {
             console.error(`Error fetching ${endpoint}:`, error);
+            return [];
+        }
+    }
+
+    // Helper method to extract data array from API response
+    extractDataArray(response, sectionName) {
+        if (response.data) {
+            // Admin endpoints: { data: Array, pagination: {...} }
+            return response.data;
+        } else if (response[sectionName]) {
+            // Public endpoints: { artists: Array, pagination: {...} }
+            return response[sectionName];
+        } else if (Array.isArray(response)) {
+            // Direct array
+            return response;
+        } else {
+            // Fallback
             return [];
         }
     }
@@ -1358,7 +1369,9 @@ class AdminDashboard {
         for (const select of selects) {
             const optionsType = select.dataset.options;
             if (optionsType === "artists") {
-                const artists = await this.fetchData("artists");
+                const response = await this.fetchData("artists");
+                const artists = this.extractDataArray(response, "artists");
+                
                 select.innerHTML = '<option value="">Select Artist</option>';
                 artists.forEach((artist) => {
                     const option = document.createElement("option");
@@ -1375,7 +1388,9 @@ class AdminDashboard {
                 }
             } else if (optionsType === "albums") {
                 // Load all albums initially, will be filtered by artist
-                const albums = await this.fetchData("albums");
+                const response = await this.fetchData("albums");
+                const albums = this.extractDataArray(response, "albums");
+                
                 this.allAlbums = albums; // Store for filtering
                 this.updateAlbumOptions(null); // Initial load with no filter
             }
@@ -1389,7 +1404,8 @@ class AdminDashboard {
 
         // Ensure we have albums data
         if (!this.allAlbums) {
-            this.allAlbums = await this.fetchData("albums");
+            const response = await this.fetchData("albums");
+            this.allAlbums = this.extractDataArray(response, "albums");
         }
 
         albumSelect.innerHTML = '<option value="">Select Album</option>';
