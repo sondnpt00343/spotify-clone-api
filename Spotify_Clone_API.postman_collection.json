@@ -1286,7 +1286,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"new_position\": 2\n}"
+                            "raw": "{\n  \"position\": 2\n}"
                         },
                         "url": {
                             "raw": "{{BASE_URL}}/api/playlists/:playlistId/tracks/:trackId/position",

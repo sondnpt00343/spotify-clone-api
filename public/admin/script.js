@@ -216,6 +216,14 @@ class AdminDashboard {
                 this.deleteItem(section, id);
             }
 
+            if (e.target.closest(".btn-manage-tracks")) {
+                e.preventDefault();
+                const button = e.target.closest(".btn-manage-tracks");
+                const playlistId = button.dataset.id;
+                console.log("Manage tracks clicked:", playlistId);
+                this.openTrackManagementModal(playlistId);
+            }
+
             if (e.target.closest(".clear-file-btn")) {
                 e.preventDefault();
                 const button = e.target.closest(".clear-file-btn");
@@ -887,8 +895,17 @@ class AdminDashboard {
         const currentUser = this.getUserInfo();
         const isOwner = currentUser && playlist.user_id === currentUser.id;
         
-        // Only show edit/delete buttons if current user is the owner
-        const actionButtons = isOwner ? `
+        // Show manage tracks button only for playlist owners
+        const manageTracks = isOwner ? `
+            <button class="btn btn-primary btn-sm btn-manage-tracks" data-id="${
+                playlist.id
+            }" title="Manage Tracks">
+                <i class="fas fa-music"></i>
+                <span class="btn-text">Tracks</span>
+            </button>
+        ` : '';
+        
+        const ownerButtons = isOwner ? `
             <button class="btn btn-edit btn-sm" data-section="playlists" data-id="${
                 playlist.id
             }" title="Edit Playlist">
@@ -926,7 +943,8 @@ class AdminDashboard {
             <td>${new Date(playlist.created_at).toLocaleDateString()}</td>
             <td>
                 <div class="action-buttons">
-                    ${actionButtons}
+                    ${manageTracks}
+                    ${ownerButtons}
                 </div>
             </td>
         `;
@@ -2418,6 +2436,623 @@ class AdminDashboard {
         };
 
         return fieldNames[fieldName] || fieldName;
+    }
+
+    // Track Management Methods
+    async openTrackManagementModal(playlistId) {
+        console.log("Opening track management modal for playlist:", playlistId);
+        this.currentPlaylistId = playlistId;
+        
+        // Get playlist info first
+        try {
+            const playlistResponse = await this.makeAuthenticatedRequest(`${this.apiBase}/playlists/${playlistId}`);
+            if (!playlistResponse.ok) {
+                throw new Error("Failed to fetch playlist data");
+            }
+            const playlist = await playlistResponse.json();
+            
+            // Update modal title
+            document.getElementById("track-modal-title").textContent = `Manage Tracks - ${playlist.name}`;
+            
+            // Show modal
+            const modal = document.getElementById("track-management-modal");
+            modal.classList.add("show");
+            
+            // Setup event listeners (only once)
+            if (!this.trackModalListenersSetup) {
+                this.setupTrackManagementEventListeners();
+                this.trackModalListenersSetup = true;
+            }
+            
+            // Load current tracks
+            await this.loadCurrentTracks();
+            
+            // Load filter options for add tracks
+            await this.loadTrackFilters();
+            
+        } catch (error) {
+            console.error("Error opening track management modal:", error);
+            this.showNotification("Error loading playlist data", "error");
+        }
+    }
+
+    setupTrackManagementEventListeners() {
+        // Close modal events
+        document.querySelector(".track-modal-close").addEventListener("click", () => {
+            this.closeTrackManagementModal();
+        });
+        
+        document.getElementById("track-modal-close").addEventListener("click", () => {
+            this.closeTrackManagementModal();
+        });
+
+        // Tab switching
+        document.querySelectorAll(".tab-button").forEach(button => {
+            button.addEventListener("click", (e) => {
+                const tabName = e.currentTarget.dataset.tab;
+                this.switchTrackTab(tabName);
+            });
+        });
+
+        // Search functionality
+        document.getElementById("current-tracks-search").addEventListener("input", (e) => {
+            this.searchCurrentTracks(e.target.value);
+        });
+
+        document.getElementById("add-tracks-search").addEventListener("input", (e) => {
+            this.searchTracksToAdd(e.target.value);
+        });
+
+        // Filter functionality
+        document.getElementById("artist-filter").addEventListener("change", () => {
+            this.filterTracksToAdd();
+        });
+
+        document.getElementById("album-filter").addEventListener("change", () => {
+            this.filterTracksToAdd();
+        });
+
+        // Bulk actions
+        document.getElementById("select-all-tracks").addEventListener("click", () => {
+            this.toggleSelectAllTracks();
+        });
+
+        document.getElementById("remove-selected-tracks").addEventListener("click", () => {
+            this.removeSelectedTracks();
+        });
+
+        // Close on backdrop click
+        document.getElementById("track-management-modal").addEventListener("click", (e) => {
+            if (e.target.id === "track-management-modal") {
+                this.closeTrackManagementModal();
+            }
+        });
+    }
+
+    closeTrackManagementModal() {
+        const modal = document.getElementById("track-management-modal");
+        modal.classList.remove("show");
+        this.currentPlaylistId = null;
+        
+        // Clear search inputs
+        document.getElementById("current-tracks-search").value = "";
+        document.getElementById("add-tracks-search").value = "";
+        
+        // Reset filters
+        document.getElementById("artist-filter").value = "";
+        document.getElementById("album-filter").value = "";
+        
+        // Reset to first tab
+        this.switchTrackTab("current-tracks");
+    }
+
+    switchTrackTab(tabName) {
+        // Update tab buttons
+        document.querySelectorAll(".tab-button").forEach(button => {
+            button.classList.remove("active");
+        });
+        document.querySelector(`[data-tab="${tabName}"]`).classList.add("active");
+
+        // Update tab panels
+        document.querySelectorAll(".tab-panel").forEach(panel => {
+            panel.classList.remove("active");
+        });
+        document.getElementById(`${tabName}-tab`).classList.add("active");
+
+        // Load data for the active tab
+        if (tabName === "add-tracks") {
+            this.loadTracksToAdd();
+        }
+    }
+
+    async loadCurrentTracks() {
+        const container = document.getElementById("current-tracks-list");
+        container.innerHTML = `
+            <div class="loading-tracks">
+                <i class="fas fa-spinner fa-spin"></i>
+                Loading tracks...
+            </div>
+        `;
+
+        try {
+            const response = await this.makeAuthenticatedRequest(
+                `${this.apiBase}/playlists/${this.currentPlaylistId}/tracks?limit=50`
+            );
+            
+            if (!response.ok) {
+                throw new Error("Failed to fetch playlist tracks");
+            }
+
+            const data = await response.json();
+            const tracks = data.tracks || [];
+            
+            // Update track count
+            document.getElementById("current-track-count").textContent = tracks.length;
+
+            if (tracks.length === 0) {
+                container.innerHTML = `
+                    <div class="no-results">
+                        <i class="fas fa-music"></i>
+                        <p>This playlist is empty</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Store current tracks for search/filter
+            this.currentTracks = tracks;
+            
+            // Render tracks
+            this.renderCurrentTracks(tracks);
+
+        } catch (error) {
+            console.error("Error loading current tracks:", error);
+            container.innerHTML = `
+                <div class="no-results">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <p>Error loading tracks</p>
+                </div>
+            `;
+        }
+    }
+
+    renderCurrentTracks(tracks) {
+        const container = document.getElementById("current-tracks-list");
+        
+        if (tracks.length === 0) {
+            container.innerHTML = `
+                <div class="no-results">
+                    <i class="fas fa-search"></i>
+                    <p>No tracks found</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = tracks.map(track => this.createCurrentTrackItem(track)).join("");
+        
+        // Setup drag and drop
+        this.setupTrackDragAndDrop();
+    }
+
+    createCurrentTrackItem(track) {
+        const duration = this.formatDuration(track.track_duration);
+        return `
+            <div class="track-item" data-track-id="${track.track_id}" data-position="${track.position}">
+                <input type="checkbox" class="track-checkbox" data-track-id="${track.track_id}">
+                <div class="track-drag-handle">
+                    <i class="fas fa-grip-vertical"></i>
+                </div>
+                <div class="track-position">
+                    <input type="number" value="${track.position}" min="1" 
+                           onchange="adminDashboard.updateTrackPosition('${track.track_id}', this.value)">
+                </div>
+                <img src="${track.track_image_url || track.album_cover_image_url || '/static/admin/default-track.svg'}" 
+                     alt="${track.track_title}" class="track-image"
+                     onerror="this.src='/static/admin/default-track.svg'">
+                <div class="track-details">
+                    <div class="track-title">${track.track_title}</div>
+                    <div class="track-artist">${track.artist_name}</div>
+                    <div class="track-album">${track.album_title || 'Single'}</div>
+                </div>
+                <div class="track-duration">${duration}</div>
+                <div class="track-actions">
+                    <button class="btn btn-danger btn-sm" onclick="adminDashboard.removeTrack('${track.track_id}')" title="Remove from playlist">
+                        <i class="fas fa-times"></i>
+                        <span>Remove</span>
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    async loadTrackFilters() {
+        try {
+            // Load artists
+            const artistsResponse = await this.fetchData("artists");
+            const artists = this.extractDataArray(artistsResponse, "artists");
+            
+            const artistFilter = document.getElementById("artist-filter");
+            artistFilter.innerHTML = '<option value="">All Artists</option>';
+            artists.forEach(artist => {
+                artistFilter.innerHTML += `<option value="${artist.id}">${artist.name}</option>`;
+            });
+
+            // Load albums  
+            const albumsResponse = await this.fetchData("albums");
+            const albums = this.extractDataArray(albumsResponse, "albums");
+            
+            const albumFilter = document.getElementById("album-filter");
+            albumFilter.innerHTML = '<option value="">All Albums</option>';
+            albums.forEach(album => {
+                albumFilter.innerHTML += `<option value="${album.id}">${album.title}</option>`;
+            });
+
+        } catch (error) {
+            console.error("Error loading track filters:", error);
+        }
+    }
+
+    async loadTracksToAdd() {
+        const container = document.getElementById("add-tracks-list");
+        const searchTerm = document.getElementById("add-tracks-search").value.trim();
+        
+        if (!searchTerm) {
+            container.innerHTML = `
+                <div class="no-results">
+                    <i class="fas fa-search"></i>
+                    <p>Search for tracks to add to this playlist</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = `
+            <div class="loading-tracks">
+                <i class="fas fa-spinner fa-spin"></i>
+                Searching tracks...
+            </div>
+        `;
+
+        try {
+            // Get tracks with pagination to load more results
+            let allTracks = [];
+            let offset = 0;
+            const limit = 50;
+            let hasMore = true;
+            
+            // Load multiple pages to get more search results (up to 200 tracks)
+            while (hasMore && offset < 200) {
+                const response = await this.fetchData("tracks", limit, offset);
+                const tracks = this.extractDataArray(response, "tracks");
+                
+                if (tracks.length === 0) {
+                    hasMore = false;
+                } else {
+                    allTracks = allTracks.concat(tracks);
+                    offset += limit;
+                    
+                    // If we got less than the limit, we've reached the end
+                    if (tracks.length < limit) {
+                        hasMore = false;
+                    }
+                }
+            }
+            
+            // Filter tracks
+            let filteredTracks = allTracks.filter(track => 
+                track.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                track.artist_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (track.album_title && track.album_title.toLowerCase().includes(searchTerm.toLowerCase()))
+            );
+
+            // Apply filters
+            const artistFilter = document.getElementById("artist-filter").value;
+            const albumFilter = document.getElementById("album-filter").value;
+
+            if (artistFilter) {
+                filteredTracks = filteredTracks.filter(track => track.artist_id === artistFilter);
+            }
+
+            if (albumFilter) {
+                filteredTracks = filteredTracks.filter(track => track.album_id === albumFilter);
+            }
+
+            // Get current playlist track IDs to exclude them
+            const currentTrackIds = this.currentTracks ? this.currentTracks.map(t => t.track_id) : [];
+            filteredTracks = filteredTracks.filter(track => !currentTrackIds.includes(track.id));
+
+            this.renderTracksToAdd(filteredTracks);
+
+        } catch (error) {
+            console.error("Error loading tracks to add:", error);
+            container.innerHTML = `
+                <div class="no-results">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <p>Error searching tracks</p>
+                </div>
+            `;
+        }
+    }
+
+    renderTracksToAdd(tracks) {
+        const container = document.getElementById("add-tracks-list");
+        
+        if (tracks.length === 0) {
+            container.innerHTML = `
+                <div class="no-results">
+                    <i class="fas fa-search"></i>
+                    <p>No tracks found matching your search</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = tracks.map(track => this.createAddTrackItem(track)).join("");
+    }
+
+    createAddTrackItem(track) {
+        const duration = this.formatDuration(track.duration);
+        return `
+            <div class="track-item">
+                <img src="${track.image_url || track.album_cover_image_url || '/static/admin/default-track.svg'}" 
+                     alt="${track.title}" class="track-image"
+                     onerror="this.src='/static/admin/default-track.svg'">
+                <div class="track-details">
+                    <div class="track-title">${track.title}</div>
+                    <div class="track-artist">${track.artist_name}</div>
+                    <div class="track-album">${track.album_title || 'Single'}</div>
+                </div>
+                <div class="track-duration">${duration}</div>
+                <div class="track-actions">
+                    <button class="btn btn-primary btn-sm" onclick="adminDashboard.addTrackToPlaylist('${track.id}')" title="Add to playlist">
+                        <i class="fas fa-plus"></i>
+                        <span>Add</span>
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    // Track Management Actions
+    async addTrackToPlaylist(trackId) {
+        try {
+            const response = await this.makeAuthenticatedRequest(
+                `${this.apiBase}/playlists/${this.currentPlaylistId}/tracks`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ track_id: trackId }),
+                }
+            );
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error?.message || "Failed to add track");
+            }
+
+            this.showNotification("Track added to playlist successfully!", "success");
+            
+            // Reload current tracks and refresh search
+            await this.loadCurrentTracks();
+            this.loadTracksToAdd(); // Refresh to remove the added track
+
+        } catch (error) {
+            console.error("Error adding track to playlist:", error);
+            this.showNotification(error.message, "error");
+        }
+    }
+
+    async removeTrack(trackId) {
+        if (!confirm("Are you sure you want to remove this track from the playlist?")) {
+            return;
+        }
+
+        try {
+            const response = await this.makeAuthenticatedRequest(
+                `${this.apiBase}/playlists/${this.currentPlaylistId}/tracks/${trackId}`,
+                {
+                    method: "DELETE",
+                }
+            );
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error?.message || "Failed to remove track");
+            }
+
+            this.showNotification("Track removed from playlist successfully!", "success");
+            
+            // Reload current tracks
+            await this.loadCurrentTracks();
+
+        } catch (error) {
+            console.error("Error removing track from playlist:", error);
+            this.showNotification(error.message, "error");
+        }
+    }
+
+    async updateTrackPosition(trackId, newPosition) {
+        try {
+            const position = parseInt(newPosition);
+            if (isNaN(position) || position < 1) {
+                throw new Error("Invalid position");
+            }
+
+            const response = await this.makeAuthenticatedRequest(
+                `${this.apiBase}/playlists/${this.currentPlaylistId}/tracks/${trackId}/position`,
+                {
+                    method: "PUT", 
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ position }),
+                }
+            );
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error?.message || "Failed to update position");
+            }
+
+            this.showNotification("Track position updated!", "success");
+            
+            // Reload current tracks to reflect new positions
+            await this.loadCurrentTracks();
+
+        } catch (error) {
+            console.error("Error updating track position:", error);
+            this.showNotification(error.message, "error");
+            
+            // Reload to reset the position input
+            await this.loadCurrentTracks();
+        }
+    }
+
+    // Search and Filter Methods
+    searchCurrentTracks(searchTerm) {
+        if (!this.currentTracks) return;
+
+        const filteredTracks = this.currentTracks.filter(track =>
+            track.track_title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            track.artist_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (track.album_title && track.album_title.toLowerCase().includes(searchTerm.toLowerCase()))
+        );
+
+        this.renderCurrentTracks(filteredTracks);
+    }
+
+    searchTracksToAdd(searchTerm) {
+        clearTimeout(this.searchTimeout);
+        this.searchTimeout = setTimeout(() => {
+            this.loadTracksToAdd();
+        }, 300); // Debounce search
+    }
+
+    filterTracksToAdd() {
+        this.loadTracksToAdd();
+    }
+
+    // Bulk Operations
+    toggleSelectAllTracks() {
+        const checkboxes = document.querySelectorAll('#current-tracks-list .track-checkbox');
+        const selectAllBtn = document.getElementById('select-all-tracks');
+        const removeSelectedBtn = document.getElementById('remove-selected-tracks');
+        
+        const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+        
+        checkboxes.forEach(cb => {
+            cb.checked = !allChecked;
+            const trackItem = cb.closest('.track-item');
+            if (cb.checked) {
+                trackItem.classList.add('selected');
+            } else {
+                trackItem.classList.remove('selected');
+            }
+        });
+
+        // Update button states
+        const anySelected = Array.from(checkboxes).some(cb => cb.checked);
+        removeSelectedBtn.disabled = !anySelected;
+        selectAllBtn.innerHTML = allChecked ? 
+            '<i class="fas fa-square"></i> Select All' : 
+            '<i class="fas fa-check-square"></i> Deselect All';
+    }
+
+    async removeSelectedTracks() {
+        const selectedCheckboxes = document.querySelectorAll('#current-tracks-list .track-checkbox:checked');
+        const trackIds = Array.from(selectedCheckboxes).map(cb => cb.dataset.trackId);
+
+        if (trackIds.length === 0) return;
+
+        if (!confirm(`Are you sure you want to remove ${trackIds.length} track(s) from the playlist?`)) {
+            return;
+        }
+
+        this.showLoading();
+
+        try {
+            // Remove tracks sequentially to avoid API rate limits
+            for (const trackId of trackIds) {
+                await this.makeAuthenticatedRequest(
+                    `${this.apiBase}/playlists/${this.currentPlaylistId}/tracks/${trackId}`,
+                    { method: "DELETE" }
+                );
+            }
+
+            this.showNotification(`${trackIds.length} track(s) removed successfully!`, "success");
+            await this.loadCurrentTracks();
+
+        } catch (error) {
+            console.error("Error removing selected tracks:", error);
+            this.showNotification("Error removing some tracks", "error");
+            await this.loadCurrentTracks(); // Reload to show current state
+        }
+
+        this.hideLoading();
+    }
+
+    // Drag and Drop for Reordering (Basic Implementation)
+    setupTrackDragAndDrop() {
+        const trackItems = document.querySelectorAll('#current-tracks-list .track-item');
+        
+        trackItems.forEach(item => {
+            const dragHandle = item.querySelector('.track-drag-handle');
+            
+            dragHandle.addEventListener('mousedown', () => {
+                item.setAttribute('draggable', true);
+            });
+
+            item.addEventListener('dragstart', (e) => {
+                item.classList.add('dragging');
+                e.dataTransfer.setData('text/plain', item.dataset.trackId);
+            });
+
+            item.addEventListener('dragend', () => {
+                item.classList.remove('dragging');
+                item.setAttribute('draggable', false);
+            });
+
+            item.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                item.classList.add('drag-over');
+            });
+
+            item.addEventListener('dragleave', () => {
+                item.classList.remove('drag-over');
+            });
+
+            item.addEventListener('drop', async (e) => {
+                e.preventDefault();
+                item.classList.remove('drag-over');
+                
+                const draggedTrackId = e.dataTransfer.getData('text/plain');
+                const targetPosition = parseInt(item.dataset.position);
+                
+                if (draggedTrackId && draggedTrackId !== item.dataset.trackId) {
+                    await this.updateTrackPosition(draggedTrackId, targetPosition);
+                }
+            });
+        });
+
+        // Setup checkbox event listeners
+        const checkboxes = document.querySelectorAll('#current-tracks-list .track-checkbox');
+        checkboxes.forEach(cb => {
+            cb.addEventListener('change', (e) => {
+                const trackItem = e.target.closest('.track-item');
+                if (e.target.checked) {
+                    trackItem.classList.add('selected');
+                } else {
+                    trackItem.classList.remove('selected');
+                }
+
+                // Update remove selected button state
+                const anySelected = Array.from(checkboxes).some(checkbox => checkbox.checked);
+                document.getElementById('remove-selected-tracks').disabled = !anySelected;
+            });
+        });
     }
 }
 

@@ -251,6 +251,92 @@
         </div>
     </div>
 
+    <!-- Track Management Modal -->
+    <div id="track-management-modal" class="modal">
+        <div class="modal-content track-management-content">
+            <div class="modal-header">
+                <h2 id="track-modal-title">Manage Playlist Tracks</h2>
+                <button class="modal-close track-modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Tab Navigation -->
+                <div class="tab-navigation">
+                    <button class="tab-button active" data-tab="current-tracks">
+                        <i class="fas fa-list"></i>
+                        Current Tracks
+                        <span class="track-count" id="current-track-count">0</span>
+                    </button>
+                    <button class="tab-button" data-tab="add-tracks">
+                        <i class="fas fa-plus"></i>
+                        Add Tracks
+                    </button>
+                </div>
+
+                <!-- Tab Content -->
+                <div class="tab-content">
+                    <!-- Current Tracks Tab -->
+                    <div id="current-tracks-tab" class="tab-panel active">
+                        <div class="tracks-header">
+                            <div class="tracks-search">
+                                <input type="text" id="current-tracks-search" placeholder="Search current tracks..." class="form-control">
+                                <i class="fas fa-search"></i>
+                            </div>
+                            <div class="tracks-actions">
+                                <button class="btn btn-outline btn-sm" id="select-all-tracks">
+                                    <i class="fas fa-check-square"></i>
+                                    Select All
+                                </button>
+                                <button class="btn btn-danger btn-sm" id="remove-selected-tracks" disabled>
+                                    <i class="fas fa-trash"></i>
+                                    Remove Selected
+                                </button>
+                            </div>
+                        </div>
+                        <div class="tracks-list-container">
+                            <div id="current-tracks-list" class="tracks-list">
+                                <div class="loading-tracks">
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                    Loading tracks...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Add Tracks Tab -->
+                    <div id="add-tracks-tab" class="tab-panel">
+                        <div class="tracks-header">
+                            <div class="tracks-search">
+                                <input type="text" id="add-tracks-search" placeholder="Search tracks to add..." class="form-control">
+                                <i class="fas fa-search"></i>
+                            </div>
+                            <div class="search-filters">
+                                <select id="artist-filter" class="form-control">
+                                    <option value="">All Artists</option>
+                                </select>
+                                <select id="album-filter" class="form-control">
+                                    <option value="">All Albums</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="tracks-list-container">
+                            <div id="add-tracks-list" class="tracks-list">
+                                <div class="no-results">
+                                    <i class="fas fa-search"></i>
+                                    <p>Search for tracks to add to this playlist</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal Actions -->
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" id="track-modal-close">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Loading Spinner -->
     <div id="loading" class="loading">
         <div class="spinner"></div>
