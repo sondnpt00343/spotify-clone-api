@@ -90,17 +90,21 @@ DELETE /api/tracks/:id              # Delete track (admin only)
 
 ### Playlists Management
 ```
-GET    /api/playlists                          # Browse public playlists
+GET    /api/playlists                          # Browse public playlists with search
 GET    /api/playlists/:id                      # Get playlist details and metadata
-GET    /api/playlists/:id/tracks               # Get all tracks in playlist
+GET    /api/playlists/:id/tracks               # Get all tracks in playlist with pagination
 POST   /api/playlists                          # Create new playlist (authenticated)
 PUT    /api/playlists/:id                      # Update playlist info (owner only)
 DELETE /api/playlists/:id                      # Delete playlist (owner only)
-POST   /api/playlists/:id/tracks               # Add track to playlist (owner only)
-DELETE /api/playlists/:id/tracks/:trackId      # Remove track from playlist (owner only)
-PUT    /api/playlists/:id/tracks/:trackId/position # Reorder tracks (owner only)
-POST   /api/playlists/:id/follow               # Follow playlist (authenticated)
-DELETE /api/playlists/:id/follow               # Unfollow playlist (authenticated)
+
+# Track Management (Owner Only)
+POST   /api/playlists/:id/tracks               # Add track to playlist
+DELETE /api/playlists/:id/tracks/:trackId      # Remove track from playlist
+PUT    /api/playlists/:id/tracks/:trackId/position # Reorder tracks by position
+
+# Social Features (Authenticated Users)
+POST   /api/playlists/:id/follow               # Follow public playlist
+DELETE /api/playlists/:id/follow               # Unfollow playlist
 ```
 
 ### Albums Management
@@ -171,7 +175,88 @@ GET  /api/admin/users              # Get all users (admin only)
 GET  /api/admin/stats              # Get system statistics (admin only)
 ```
 
+## 📖 API Details
 
+### Playlist Follow/Unfollow APIs
+
+#### Follow Playlist
+```http
+POST /api/playlists/:id/follow
+Authorization: Bearer {access_token}
+```
+
+**Description**: Follow a public playlist to add it to your library  
+**Authentication**: Required  
+**Parameters**:
+- `id` (path): Playlist UUID
+
+**Validation Rules**:
+- ✅ Playlist must exist
+- ✅ Playlist must be public
+- ✅ Cannot follow your own playlist
+- ✅ Cannot follow if already following
+
+**Response Success** (200):
+```json
+{
+  "message": "Playlist followed successfully",
+  "is_following": true
+}
+```
+
+**Error Responses**:
+- `400` - Missing playlist ID
+- `401` - User not authenticated  
+- `403` - Cannot follow private playlist
+- `404` - Playlist not found
+- `409` - Already following or trying to follow own playlist
+
+#### Unfollow Playlist
+```http
+DELETE /api/playlists/:id/follow
+Authorization: Bearer {access_token}
+```
+
+**Description**: Unfollow a playlist to remove it from your library  
+**Authentication**: Required  
+**Parameters**:
+- `id` (path): Playlist UUID
+
+**Validation Rules**:
+- ✅ Must be currently following the playlist
+
+**Response Success** (200):
+```json
+{
+  "message": "Playlist unfollowed successfully", 
+  "is_following": false
+}
+```
+
+**Error Responses**:
+- `400` - Missing playlist ID
+- `401` - User not authenticated
+- `409` - Not currently following this playlist
+
+### Playlist Management Rules
+
+#### Default "Liked Songs" Playlist
+- ✅ **Auto-created** during user registration
+- ❌ **Cannot be updated** - Name, description, or privacy settings
+- ❌ **Cannot be deleted** - System playlist for user's liked tracks
+- ✅ **Can add/remove tracks** - Standard track management applies
+
+#### Playlist Name Validation
+- ✅ **Unique names required** - No duplicate names within user's library
+- ✅ **Auto-numbering for create** - "My Playlist #2" if "My Playlist" exists
+- ❌ **No auto-numbering for update** - Returns error for duplicate names
+
+**Update Playlist Error Responses**:
+- `403` - Cannot modify "Liked Songs" playlist (`CANNOT_MODIFY_LIKED_SONGS`)
+- `409` - Playlist name already exists (`DUPLICATE_PLAYLIST_NAME`)
+
+**Delete Playlist Error Responses**:
+- `403` - Cannot delete "Liked Songs" playlist (`CANNOT_DELETE_LIKED_SONGS`)
 
 ## 🗃️ Database Schema
 

@@ -1315,7 +1315,7 @@
                 {
                     "name": "Follow Playlist",
                     "request": {
-                        "method": "PUT",
+                        "method": "POST",
                         "header": [
                             {
                                 "key": "Authorization",
@@ -1334,11 +1334,48 @@
                             "variable": [
                                 {
                                     "key": "playlistId",
-                                    "value": "playlist-uuid-here"
+                                    "value": "playlist-uuid-here",
+                                    "description": "UUID of the public playlist to follow"
                                 }
                             ]
+                        },
+                        "description": "Follow a public playlist to add it to your library. Cannot follow private playlists or your own playlists."
+                    },
+                    "response": [
+                        {
+                            "name": "Success Response",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{access_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{BASE_URL}}/api/playlists/123e4567-e89b-12d3-a456-426614174000/follow",
+                                    "host": ["{{BASE_URL}}"],
+                                    "path": [
+                                        "api",
+                                        "playlists",
+                                        "123e4567-e89b-12d3-a456-426614174000",
+                                        "follow"
+                                    ]
+                                }
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n  \"message\": \"Playlist followed successfully\",\n  \"is_following\": true\n}"
                         }
-                    }
+                    ]
                 },
                 {
                     "name": "Unfollow Playlist",
@@ -1362,11 +1399,48 @@
                             "variable": [
                                 {
                                     "key": "playlistId",
-                                    "value": "playlist-uuid-here"
+                                    "value": "playlist-uuid-here",
+                                    "description": "UUID of the playlist to unfollow"
                                 }
                             ]
+                        },
+                        "description": "Unfollow a playlist to remove it from your library. You must be currently following the playlist."
+                    },
+                    "response": [
+                        {
+                            "name": "Success Response",
+                            "originalRequest": {
+                                "method": "DELETE",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{access_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{BASE_URL}}/api/playlists/123e4567-e89b-12d3-a456-426614174000/follow",
+                                    "host": ["{{BASE_URL}}"],
+                                    "path": [
+                                        "api",
+                                        "playlists",
+                                        "123e4567-e89b-12d3-a456-426614174000",
+                                        "follow"
+                                    ]
+                                }
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "body": "{\n  \"message\": \"Playlist unfollowed successfully\",\n  \"is_following\": false\n}"
                         }
-                    }
+                    ]
                 }
             ]
         },

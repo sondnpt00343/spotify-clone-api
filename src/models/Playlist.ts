@@ -65,6 +65,14 @@ export class PlaylistModel {
     return playlist || null;
   }
 
+  // Find playlist by name and user ID for duplicate checking
+  static async findByNameAndUser(name: string, userId: string): Promise<Playlist | null> {
+    const playlist = await db('playlists')
+      .where({ name: name.trim(), user_id: userId })
+      .first();
+    return playlist || null;
+  }
+
   // Get playlist with details (user info, stats)
   static async getWithDetails(id: string): Promise<PlaylistWithDetails | null> {
     const result = await db('playlists')

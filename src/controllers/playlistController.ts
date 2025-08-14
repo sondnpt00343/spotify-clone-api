@@ -243,6 +243,35 @@ export class PlaylistController {
         throw error;
       }
 
+      // Get current playlist to check if it's the default "Liked Songs" playlist
+      const currentPlaylist = await PlaylistModel.findById(id);
+      if (!currentPlaylist) {
+        const error: CustomError = new Error('Playlist not found');
+        error.statusCode = 404;
+        error.code = 'PLAYLIST_NOT_FOUND';
+        throw error;
+      }
+
+      // Prevent updating the default "Liked Songs" playlist
+      if (currentPlaylist.name === 'Liked Songs') {
+        const error: CustomError = new Error('Cannot modify the default "Liked Songs" playlist');
+        error.statusCode = 403;
+        error.code = 'CANNOT_MODIFY_LIKED_SONGS';
+        throw error;
+      }
+
+      // Check for duplicate playlist name if name is being updated
+      if (name && name.trim() !== currentPlaylist.name) {
+        const trimmedName = name.trim();
+        const duplicatePlaylist = await PlaylistModel.findByNameAndUser(trimmedName, userId);
+        if (duplicatePlaylist) {
+          const error: CustomError = new Error(`A playlist named "${trimmedName}" already exists in your library`);
+          error.statusCode = 409;
+          error.code = 'DUPLICATE_PLAYLIST_NAME';
+          throw error;
+        }
+      }
+
       // Update playlist
       const updatedPlaylist = await PlaylistModel.update(id, userId, {
         name: name?.trim(),
@@ -293,6 +322,23 @@ export class PlaylistController {
         const error: CustomError = new Error('Permission denied: You can only delete your own playlists');
         error.statusCode = 403;
         error.code = 'PERMISSION_DENIED';
+        throw error;
+      }
+
+      // Get current playlist to check if it's the default "Liked Songs" playlist
+      const currentPlaylist = await PlaylistModel.findById(id);
+      if (!currentPlaylist) {
+        const error: CustomError = new Error('Playlist not found');
+        error.statusCode = 404;
+        error.code = 'PLAYLIST_NOT_FOUND';
+        throw error;
+      }
+
+      // Prevent deleting the default "Liked Songs" playlist
+      if (currentPlaylist.name === 'Liked Songs') {
+        const error: CustomError = new Error('Cannot delete the default "Liked Songs" playlist');
+        error.statusCode = 403;
+        error.code = 'CANNOT_DELETE_LIKED_SONGS';
         throw error;
       }
 
