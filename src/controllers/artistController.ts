@@ -369,6 +369,44 @@ export class ArtistController {
     }
   }
 
+  // GET /api/me/following - Get user's followed artists
+  static async getFollowedArtists(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = req.user?.userId;
+      const limit = parseInt(req.query.limit as string) || 20;
+      const offset = parseInt(req.query.offset as string) || 0;
+
+      if (!userId) {
+        const error: CustomError = new Error('User not authenticated');
+        error.statusCode = 401;
+        error.code = 'NOT_AUTHENTICATED';
+        throw error;
+      }
+
+      // Validate limit
+      if (limit > 50) {
+        const error: CustomError = new Error('Limit cannot exceed 50');
+        error.statusCode = 400;
+        error.code = 'INVALID_LIMIT';
+        throw error;
+      }
+
+      // Get followed artists
+      const followedArtists = await ArtistModel.getFollowedArtists(userId, limit, offset);
+
+      res.status(200).json({
+        artists: followedArtists,
+        pagination: {
+          limit,
+          offset,
+          total: followedArtists.length
+        }
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   // DELETE /api/artists/:id (admin only)
   static async deleteArtist(req: Request, res: Response, next: NextFunction) {
     try {

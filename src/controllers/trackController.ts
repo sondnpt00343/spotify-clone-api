@@ -126,6 +126,62 @@ export class TrackController {
     }
   }
 
+  // POST /api/tracks/:id/complete - Track play completion with actual duration
+  static async completeTrack(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const userId = req.user?.userId;
+      const { play_duration } = req.body;
+
+      if (!id) {
+        const error: CustomError = new Error('Track ID is required');
+        error.statusCode = 400;
+        error.code = 'MISSING_TRACK_ID';
+        throw error;
+      }
+
+      if (!userId) {
+        const error: CustomError = new Error('User not authenticated');
+        error.statusCode = 401;
+        error.code = 'NOT_AUTHENTICATED';
+        throw error;
+      }
+
+      if (!play_duration || typeof play_duration !== 'number' || play_duration <= 0) {
+        const error: CustomError = new Error('Valid play duration in seconds is required');
+        error.statusCode = 400;
+        error.code = 'INVALID_PLAY_DURATION';
+        throw error;
+      }
+
+      // Check if track exists
+      const track = await TrackModel.findById(id);
+      if (!track) {
+        const error: CustomError = new Error('Track not found');
+        error.statusCode = 404;
+        error.code = 'TRACK_NOT_FOUND';
+        throw error;
+      }
+
+      // Record completed play with actual duration
+      const playWasCounted = await TrackModel.recordPlay(userId, id, play_duration);
+
+      // Get updated track with new play count
+      const updatedTrack = await TrackModel.getWithDetails(id);
+
+      res.status(200).json({
+        message: playWasCounted ? 'Track completion recorded and counted' : 'Track completion recorded (not counted due to duration/spam)',
+        track: updatedTrack,
+        play_count: updatedTrack?.play_count,
+        was_counted: playWasCounted,
+        play_duration_seconds: play_duration,
+        minimum_required_seconds: Math.min(30, track.duration * 0.5)
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   // POST /api/tracks/:id/play
   static async playTrack(req: Request, res: Response, next: NextFunction) {
     try {
@@ -156,16 +212,17 @@ export class TrackController {
         throw error;
       }
 
-      // Record play in history and increment play count
-      await TrackModel.recordPlay(userId, id, position);
+      // Record play in history and increment play count if valid
+      const playWasCounted = await TrackModel.recordPlay(userId, id, position);
 
       // Get updated track with new play count
       const updatedTrack = await TrackModel.getWithDetails(id);
 
       res.status(200).json({
-        message: 'Track play recorded',
+        message: playWasCounted ? 'Track play recorded and counted' : 'Track play recorded (not counted due to duration/spam)',
         track: updatedTrack,
-        play_count: updatedTrack?.play_count
+        play_count: updatedTrack?.play_count,
+        was_counted: playWasCounted
       });
     } catch (error) {
       next(error);

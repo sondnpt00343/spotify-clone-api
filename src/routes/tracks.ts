@@ -48,6 +48,14 @@ router.post('/:id/play',
   TrackController.playTrack
 );
 
+// Complete track play with duration (requires authentication)
+// POST /api/tracks/:id/complete
+router.post('/:id/complete', 
+  generalLimiter,
+  authenticateToken,
+  TrackController.completeTrack
+);
+
 // Like track (requires authentication)
 // POST /api/tracks/:id/like
 router.post('/:id/like', 

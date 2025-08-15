@@ -75,10 +75,8 @@ export class PlayerController {
         device_name
       });
 
-      // Record play in history (only if starting from beginning)
-      if (position_ms === 0) {
-        await TrackModel.recordPlay(userId, track_id);
-      }
+      // Note: Play will be recorded when track is completed/skipped with proper duration
+      // Don't record immediately on start to avoid counting incomplete plays
 
       // Get updated playback state
       const updatedPlayback = await PlayerModel.getCurrentPlayback(userId);
@@ -143,8 +141,9 @@ export class PlayerController {
         throw error;
       }
 
-      // Record play for new track
-      await TrackModel.recordPlay(userId, updatedPlayback.track.id);
+      // Record play for new track (when skipping, we assume some listening time)
+      // Use a reasonable duration for skip scenarios
+      await TrackModel.recordPlay(userId, updatedPlayback.track.id, 35);
 
       res.status(200).json(updatedPlayback);
     } catch (error) {
@@ -176,8 +175,9 @@ export class PlayerController {
         throw error;
       }
 
-      // Record play for previous track
-      await TrackModel.recordPlay(userId, updatedPlayback.track.id);
+      // Record play for previous track (when going back, assume some listening time)
+      // Use a reasonable duration for previous track scenarios
+      await TrackModel.recordPlay(userId, updatedPlayback.track.id, 35);
 
       res.status(200).json(updatedPlayback);
     } catch (error) {

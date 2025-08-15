@@ -3,6 +3,7 @@ import { AuthController } from '../controllers/authController';
 import { TrackController } from '../controllers/trackController';
 import { PlaylistController } from '../controllers/playlistController';
 import { AlbumController } from '../controllers/albumController';
+import { ArtistController } from '../controllers/artistController';
 import { authenticateToken } from '../middleware/auth';
 import { validateRequest, registerSchema, loginSchema, changePasswordSchema, updateProfileSchema } from '../utils/validation';
 import rateLimit from 'express-rate-limit';
@@ -106,6 +107,13 @@ router.get('/me/albums/liked',
   generalAuthLimiter,
   authenticateToken, 
   AlbumController.getLikedAlbums
+);
+
+// User's followed artists
+router.get('/me/following', 
+  generalAuthLimiter,
+  authenticateToken, 
+  ArtistController.getFollowedArtists
 );
 
 export default router; 

@@ -206,7 +206,30 @@ export class TrackModel {
   }
 
   // Record play in history
-  static async recordPlay(userId: string, trackId: string, playDuration?: number): Promise<void> {
+  static async recordPlay(userId: string, trackId: string, playDuration?: number): Promise<boolean> {
+    // Get track info to determine duration
+    const track = await this.findById(trackId);
+    if (!track) return false;
+
+    // Check for recent play to prevent spam (within 5 minutes)
+    const hasRecentPlay = await this.checkRecentPlay(userId, trackId, 5);
+    if (hasRecentPlay) {
+      // Still record in history but don't count as new play
+      const playRecord = {
+        id: uuidv4(),
+        user_id: userId,
+        track_id: trackId,
+        played_at: new Date().toISOString(),
+        play_duration: playDuration || null
+      };
+      await db('play_history').insert(playRecord);
+      return false;
+    }
+
+    // Calculate threshold: at least 30 seconds OR 50% of track duration
+    const minDuration = Math.min(30, track.duration * 0.5);
+    const shouldCount = playDuration ? playDuration >= minDuration : false;
+
     const playRecord = {
       id: uuidv4(),
       user_id: userId,
@@ -215,10 +238,33 @@ export class TrackModel {
       play_duration: playDuration || null
     };
 
-    await Promise.all([
-      db('play_history').insert(playRecord),
-      this.incrementPlayCount(trackId)
-    ]);
+    // Always save to history, but only increment count when conditions are met
+    if (shouldCount) {
+      await Promise.all([
+        db('play_history').insert(playRecord),
+        this.incrementPlayCount(trackId)
+      ]);
+    } else {
+      await db('play_history').insert(playRecord);
+    }
+
+    return shouldCount;
+  }
+
+  // Check for recent play to prevent spam
+  static async checkRecentPlay(userId: string, trackId: string, windowMinutes: number = 5): Promise<boolean> {
+    const recentTime = new Date();
+    recentTime.setMinutes(recentTime.getMinutes() - windowMinutes);
+
+    const recentPlay = await db('play_history')
+      .where({
+        user_id: userId,
+        track_id: trackId
+      })
+      .where('played_at', '>', recentTime.toISOString())
+      .first();
+
+    return !!recentPlay; // true if there's a recent play
   }
 
   // Get user's recently played tracks

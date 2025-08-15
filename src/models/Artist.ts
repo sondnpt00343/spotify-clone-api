@@ -222,4 +222,24 @@ export class ArtistModel {
         updated_at: new Date().toISOString()
       });
   }
+
+  // Get user's followed artists
+  static async getFollowedArtists(
+    userId: string, 
+    limit: number = 20, 
+    offset: number = 0
+  ): Promise<(Artist & { followed_at: string })[]> {
+    const followedArtists = await db('user_follows')
+      .select([
+        'artists.*',
+        'user_follows.followed_at'
+      ])
+      .join('artists', 'user_follows.artist_id', 'artists.id')
+      .where('user_follows.user_id', userId)
+      .orderBy('user_follows.followed_at', 'desc')
+      .limit(limit)
+      .offset(offset);
+
+    return this.castArtistArrayBooleans(followedArtists);
+  }
 } 
