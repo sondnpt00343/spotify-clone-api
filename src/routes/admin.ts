@@ -12,8 +12,8 @@ const router = Router();
 
 // Rate limiting for admin endpoints
 const adminLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10000, // Allow more requests for admin operations
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW || '900000'), // 15 minutes
+  max: parseInt(process.env.RATE_LIMIT_ADMIN_MAX || '50000'), // Allow more requests for admin operations
   message: {
     error: {
       code: 'RATE_LIMIT_EXCEEDED',

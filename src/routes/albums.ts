@@ -8,8 +8,8 @@ const router = Router();
 
 // Rate limiting
 const generalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10000, // limit each IP to 10000 requests per windowMs
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW || '900000'), // 15 minutes
+  max: parseInt(process.env.RATE_LIMIT_MAX || '50000'), // limit each IP to requests per windowMs
   message: {
     error: {
       code: 'RATE_LIMIT_EXCEEDED',
