@@ -5,50 +5,59 @@ A comprehensive music streaming backend API built with ExpressJS, TypeScript, an
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 - Node.js >= 16.0.0
 - npm hoặc yarn
 
 ### Installation
 
 1. **Clone repository và install dependencies:**
+
 ```bash
 npm install
 ```
 
 2. **Setup environment variables:**
 Copy `env.example` thành `.env` và cập nhật values:
+
 ```bash
 cp env.example .env
 ```
 
 3. **Chạy migrations để tạo database:**
+
 ```bash
 npm run migrate
 ```
 
 4. **Seed sample data:**
+
 ```bash
 npm run seed
 ```
 
 5. **Start development server:**
+
 ```bash
 npm run dev
 ```
 
-Server sẽ chạy tại: http://localhost:3000
+Server sẽ chạy tại: <http://localhost:3000>
 
 ## 📊 API Endpoints
 
 ### Health Check
+
 ```
 GET /health
 ```
 
 ### Authentication & User Management
+
 ```
 POST /api/auth/register          # Register new user account
 POST /api/auth/login            # Authenticate user and get tokens
+POST /api/auth/logout           # Logout user and invalidate token (authenticated)
 POST /api/auth/change-password  # Change user password (authenticated)
 POST /api/auth/refresh-token    # Refresh access token
 GET  /api/users/me             # Get current user profile
@@ -61,6 +70,7 @@ GET  /api/me/player/recently-played # Get recently played tracks
 ```
 
 ### Artists Management
+
 ```
 GET    /api/artists                    # Browse and search artists
 GET    /api/artists/trending           # Get trending artists
@@ -75,6 +85,7 @@ DELETE /api/artists/:id               # Delete artist (admin only)
 ```
 
 ### Tracks Management
+
 ```
 GET    /api/tracks                  # Browse and search tracks
 GET    /api/tracks/popular          # Get globally popular tracks
@@ -89,6 +100,7 @@ DELETE /api/tracks/:id              # Delete track (admin only)
 ```
 
 ### Playlists Management
+
 ```
 GET    /api/playlists                          # Browse public playlists with search
 GET    /api/playlists/:id                      # Get playlist details and metadata
@@ -108,6 +120,7 @@ DELETE /api/playlists/:id/follow               # Unfollow playlist
 ```
 
 ### Albums Management
+
 ```
 GET    /api/albums                  # Browse and search albums
 GET    /api/albums/popular          # Get popular albums
@@ -122,6 +135,7 @@ DELETE /api/albums/:id              # Delete album (admin only)
 ```
 
 ### Search & Discovery
+
 ```
 GET /api/search                     # Universal search across all content types
 GET /api/search/quick               # Fast search for autocomplete features
@@ -134,6 +148,7 @@ GET /api/search/playlists           # Search public playlists
 ```
 
 ### Player Controls & Playback
+
 ```
 GET    /api/me/player                  # Get current playback state and track info
 PUT    /api/me/player/play             # Start playback or resume paused track
@@ -153,6 +168,7 @@ DELETE /api/me/player                 # Stop playback completely
 ```
 
 ### File Upload & Media Management
+
 ```
 POST   /api/upload/avatar               # Upload user profile avatar (authenticated)
 POST   /api/upload/artist/:id/image     # Upload artist profile image (admin only)
@@ -166,6 +182,7 @@ DELETE /api/upload/:type/:file          # Delete uploaded file (admin only)
 ```
 
 ### System Health & Administration
+
 ```
 GET  /health                        # Basic API health status check
 GET  /health/performance           # Detailed performance metrics
@@ -180,6 +197,7 @@ GET  /api/admin/stats              # Get system statistics (admin only)
 ### Playlist Follow/Unfollow APIs
 
 #### Follow Playlist
+
 ```http
 POST /api/playlists/:id/follow
 Authorization: Bearer {access_token}
@@ -188,15 +206,18 @@ Authorization: Bearer {access_token}
 **Description**: Follow a public playlist to add it to your library  
 **Authentication**: Required  
 **Parameters**:
+
 - `id` (path): Playlist UUID
 
 **Validation Rules**:
+
 - ✅ Playlist must exist
 - ✅ Playlist must be public
 - ✅ Cannot follow your own playlist
 - ✅ Cannot follow if already following
 
 **Response Success** (200):
+
 ```json
 {
   "message": "Playlist followed successfully",
@@ -205,6 +226,7 @@ Authorization: Bearer {access_token}
 ```
 
 **Error Responses**:
+
 - `400` - Missing playlist ID
 - `401` - User not authenticated  
 - `403` - Cannot follow private playlist
@@ -212,6 +234,7 @@ Authorization: Bearer {access_token}
 - `409` - Already following or trying to follow own playlist
 
 #### Unfollow Playlist
+
 ```http
 DELETE /api/playlists/:id/follow
 Authorization: Bearer {access_token}
@@ -220,12 +243,15 @@ Authorization: Bearer {access_token}
 **Description**: Unfollow a playlist to remove it from your library  
 **Authentication**: Required  
 **Parameters**:
+
 - `id` (path): Playlist UUID
 
 **Validation Rules**:
+
 - ✅ Must be currently following the playlist
 
 **Response Success** (200):
+
 ```json
 {
   "message": "Playlist unfollowed successfully", 
@@ -234,6 +260,7 @@ Authorization: Bearer {access_token}
 ```
 
 **Error Responses**:
+
 - `400` - Missing playlist ID
 - `401` - User not authenticated
 - `409` - Not currently following this playlist
@@ -241,26 +268,31 @@ Authorization: Bearer {access_token}
 ### Playlist Management Rules
 
 #### Default "Liked Songs" Playlist
+
 - ✅ **Auto-created** during user registration
 - ❌ **Cannot be updated** - Name, description, or privacy settings
 - ❌ **Cannot be deleted** - System playlist for user's liked tracks
 - ✅ **Can add/remove tracks** - Standard track management applies
 
 #### Playlist Name Validation
+
 - ✅ **Unique names required** - No duplicate names within user's library
 - ✅ **Auto-numbering for create** - "My Playlist #2" if "My Playlist" exists
 - ❌ **No auto-numbering for update** - Returns error for duplicate names
 
 **Update Playlist Error Responses**:
+
 - `403` - Cannot modify "Liked Songs" playlist (`CANNOT_MODIFY_LIKED_SONGS`)
 - `409` - Playlist name already exists (`DUPLICATE_PLAYLIST_NAME`)
 
 **Delete Playlist Error Responses**:
+
 - `403` - Cannot delete "Liked Songs" playlist (`CANNOT_DELETE_LIKED_SONGS`)
 
 ## 🗃️ Database Schema
 
 ### Core Tables
+
 - **users** - User accounts, authentication, and profile information
 - **artists** - Artist profiles with biographical information and statistics
 - **albums** - Album collections with metadata and release information
@@ -268,11 +300,13 @@ Authorization: Bearer {access_token}
 - **playlists** - User-created playlists with privacy and sharing settings
 
 ### Relationship Tables
+
 - **playlist_tracks** - Many-to-many mapping of tracks within playlists
 - **user_library** - User's saved content (liked tracks, albums, etc.)
 - **user_follows** - Artist following relationships and social features
 
 ### Feature Tables
+
 - **play_history** - Complete listening history with timestamps and context
 - **current_playback** - Real-time player state and active sessions
 - **user_queue** - Personalized playback queue management
@@ -300,6 +334,7 @@ npm run test:watch   # Run tests in watch mode for development
 ```
 
 ### Project Structure
+
 ```
 src/
 ├── controllers/        # API request handlers and business logic
@@ -316,18 +351,21 @@ src/
 ## ✨ Key Features
 
 ### 🔐 Authentication & Security
+
 - JWT-based authentication with refresh tokens
 - Secure password hashing with bcrypt
 - Rate limiting and request validation
 - Role-based access control for admin operations
 
 ### 🎵 Music Library Management
+
 - Complete CRUD operations for artists, albums, and tracks
 - Advanced search with relevance scoring and autocomplete
 - User library management (liked tracks, albums, followed artists)
 - Playlist creation, management, and sharing
 
 ### 🎮 Real-time Player Controls
+
 - Full playback state management
 - Play/pause/seek/volume controls
 - Smart shuffle and repeat modes
@@ -335,12 +373,14 @@ src/
 - Context-aware playback (album, playlist, search contexts)
 
 ### 📁 File Upload & Media Handling
+
 - Multi-format support (JPEG, PNG, GIF, WebP, MP3, WAV, FLAC)
 - Secure file validation and storage
 - Automatic content-type detection and serving
 - Image upload for avatars, album covers, and artist photos
 
 ### 🚀 Performance & Monitoring
+
 - Response compression and caching
 - Performance monitoring and health checks
 - Memory-efficient data handling
@@ -349,6 +389,7 @@ src/
 ## 🔧 Configuration
 
 ### Environment Variables
+
 ```env
 NODE_ENV=development
 PORT=3000
@@ -359,6 +400,7 @@ CORS_ORIGIN=http://localhost:3000
 ```
 
 ### Database Configuration
+
 - **Development**: SQLite file (`./database.sqlite`)
 - **Test**: In-memory SQLite for fast testing
 - **Production**: SQLite with performance optimizations
@@ -373,12 +415,14 @@ npm run test:watch      # Watch mode
 ## 📚 Sample Data
 
 The database comes pre-seeded with sample data for immediate testing:
+
 - **4 Vietnamese Artists**: Đen, Trúc Nhân, Thùy Chi, Noo Phước Thịnh
 - **4 Albums** with cover images and metadata
 - **8 Tracks** with realistic play counts and duration
 - **3 Test User Accounts** for different testing scenarios
 
 ### Test Accounts
+
 ```
 Email: admin@spotify.com | Username: admin | Role: Admin
 Email: user1@spotify.com | Username: musiclover | Role: User
@@ -389,6 +433,7 @@ Password for all accounts: password123
 ## 🎯 API Testing
 
 ### Using Postman Collection
+
 1. Import `Spotify_Clone_API.postman_collection.json` into Postman
 2. Set the `BASE_URL` variable to `http://localhost:3000`
 3. Use the Login endpoint to obtain an access token
@@ -396,11 +441,13 @@ Password for all accounts: password123
 5. Test all endpoints with realistic data and scenarios
 
 ### Manual Testing
+
 All endpoints support standard HTTP methods and return JSON responses with consistent error handling and status codes.
 
 ## 🏗️ Architecture
 
 ### Technology Stack
+
 - **Runtime**: Node.js 16+
 - **Framework**: Express.js with TypeScript
 - **Database**: SQLite with Knex.js query builder
@@ -410,12 +457,15 @@ All endpoints support standard HTTP methods and return JSON responses with consi
 - **Security**: Helmet, CORS, Rate limiting
 
 ### Database Design
+
 The API uses a relational database design with 11 tables optimized for music streaming:
+
 - **Core Tables**: users, artists, albums, tracks, playlists
 - **Relationship Tables**: playlist_tracks, user_library, user_follows
 - **Feature Tables**: play_history, current_playback, user_queue
 
 ### API Design Principles
+
 - RESTful endpoints with consistent naming
 - JSON request/response format
 - Comprehensive error handling with meaningful messages

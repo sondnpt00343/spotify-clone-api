@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { CustomError } from '../middleware/errorHandler';
+import { TokenBlacklistModel } from '../models/TokenBlacklist';
 
 export interface JwtPayload {
   userId: string;
@@ -33,13 +34,22 @@ export const generateRefreshToken = (payload: JwtPayload): string => {
   } as jwt.SignOptions);
 };
 
-export const verifyToken = (token: string): JwtPayload => {
+export const verifyToken = async (token: string): Promise<JwtPayload> => {
   const secret = process.env.JWT_SECRET;
   if (!secret) {
     throw new Error('JWT_SECRET is not defined in environment variables');
   }
 
   try {
+    // First check if token is blacklisted
+    const isBlacklisted = await TokenBlacklistModel.isTokenBlacklisted(token);
+    if (isBlacklisted) {
+      const customError: CustomError = new Error('Token has been revoked');
+      customError.statusCode = 401;
+      customError.code = 'TOKEN_REVOKED';
+      throw customError;
+    }
+
     const decoded = jwt.verify(token, secret, {
       issuer: 'spotify-clone-api',
       audience: 'spotify-clone-client'
@@ -47,6 +57,11 @@ export const verifyToken = (token: string): JwtPayload => {
 
     return decoded;
   } catch (error) {
+    // If it's already our custom error, re-throw it
+    if (error instanceof Error && 'statusCode' in error) {
+      throw error;
+    }
+
     if (error instanceof jwt.TokenExpiredError) {
       const customError: CustomError = new Error('Token has expired');
       customError.statusCode = 401;

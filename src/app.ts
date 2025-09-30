@@ -162,6 +162,10 @@ if (process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => {
     console.log(`🚀 Server is running on port ${PORT}`);
     console.log(`📊 Health check: http://localhost:${PORT}/health`);
+    
+    // Start token cleanup service
+    const { TokenCleanupService } = require('./services/tokenCleanupService');
+    TokenCleanupService.getInstance().start();
   });
 }
 

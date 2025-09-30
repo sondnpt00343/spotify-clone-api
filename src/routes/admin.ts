@@ -7,6 +7,8 @@ import { PlaylistModel } from '../models/Playlist';
 import { authenticateToken, optionalAuth } from '../middleware/auth';
 import rateLimit from 'express-rate-limit';
 import db from '../config/database';
+import { TokenBlacklistModel } from '../models/TokenBlacklist';
+import { TokenCleanupService } from '../services/tokenCleanupService';
 
 const router = Router();
 
@@ -439,6 +441,138 @@ router.get('/playlists', authenticateToken, adminLimiter, async (req, res) => {
       error: {
         code: 'INTERNAL_ERROR',
         message: 'Failed to fetch playlists'
+      }
+    });
+  }
+});
+
+// Token blacklist management endpoints
+
+// Get token blacklist statistics
+router.get('/tokens/stats', authenticateToken, adminLimiter, async (req, res) => {
+  try {
+    const stats = await TokenBlacklistModel.getStats();
+    const cleanupService = TokenCleanupService.getInstance();
+    const serviceStatus = cleanupService.getStatus();
+
+    res.json({
+      success: true,
+      data: {
+        blacklist: stats,
+        cleanup_service: serviceStatus
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching token stats:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'Failed to fetch token statistics'
+      }
+    });
+  }
+});
+
+// Manual token cleanup
+router.post('/tokens/cleanup', authenticateToken, adminLimiter, async (req, res) => {
+  try {
+    const cleanupService = TokenCleanupService.getInstance();
+    const deletedCount = await cleanupService.manualCleanup();
+
+    res.json({
+      success: true,
+      data: {
+        message: 'Token cleanup completed',
+        deleted_count: deletedCount
+      }
+    });
+  } catch (error) {
+    console.error('Error during manual token cleanup:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'CLEANUP_ERROR',
+        message: 'Failed to perform token cleanup'
+      }
+    });
+  }
+});
+
+// Get blacklisted tokens for a specific user
+router.get('/tokens/user/:userId', authenticateToken, adminLimiter, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'MISSING_USER_ID',
+          message: 'User ID is required'
+        }
+      });
+    }
+    
+    const tokens = await TokenBlacklistModel.getUserBlacklistedTokens(userId);
+
+    return res.json({
+      success: true,
+      data: {
+        user_id: userId,
+        blacklisted_tokens: tokens.map(token => ({
+          id: token.id,
+          token_type: token.token_type,
+          reason: token.reason,
+          expires_at: token.expires_at,
+          created_at: token.created_at
+        }))
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching user tokens:', error);
+    return res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'Failed to fetch user tokens'
+      }
+    });
+  }
+});
+
+// Blacklist all tokens for a user (emergency action)
+router.post('/tokens/user/:userId/blacklist-all', authenticateToken, adminLimiter, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { reason = 'admin_action' } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'MISSING_USER_ID',
+          message: 'User ID is required'
+        }
+      });
+    }
+
+    await TokenBlacklistModel.blacklistAllUserTokens(userId, reason);
+
+    return res.json({
+      success: true,
+      data: {
+        message: `All tokens for user ${userId} have been blacklisted`,
+        reason
+      }
+    });
+  } catch (error) {
+    console.error('Error blacklisting user tokens:', error);
+    return res.status(500).json({
+      success: false,
+      error: {
+        code: 'BLACKLIST_ERROR',
+        message: 'Failed to blacklist user tokens'
       }
     });
   }

@@ -1,8 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import { UserModel, CreateUserData } from '../models/User';
 import { PlaylistModel } from '../models/Playlist';
-import { generateAccessToken, generateRefreshToken, JwtPayload } from '../utils/jwt';
+import { generateAccessToken, generateRefreshToken, JwtPayload, extractTokenFromHeader } from '../utils/jwt';
 import { CustomError } from '../middleware/errorHandler';
+import { TokenBlacklistModel } from '../models/TokenBlacklist';
 
 export class AuthController {
   // POST /api/auth/register
@@ -237,8 +238,12 @@ export class AuthController {
       // Update password
       await UserModel.changePassword(userId, new_password);
 
+      // Blacklist all existing tokens for security
+      await TokenBlacklistModel.blacklistAllUserTokens(userId, 'password_change');
+
       res.status(200).json({
-        message: 'Password changed successfully'
+        message: 'Password changed successfully',
+        details: 'All existing sessions have been invalidated. Please log in again.'
       });
     } catch (error) {
       next(error);
@@ -280,6 +285,45 @@ export class AuthController {
       res.status(200).json({
         access_token: accessToken,
         token_type: 'Bearer'
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // POST /api/auth/logout
+  static async logout(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = req.user?.userId;
+      
+      if (!userId) {
+        const error: CustomError = new Error('User not authenticated');
+        error.statusCode = 401;
+        error.code = 'NOT_AUTHENTICATED';
+        throw error;
+      }
+
+      // Extract the token from the authorization header
+      const authHeader = req.headers.authorization;
+      const token = extractTokenFromHeader(authHeader);
+
+      // Add the current access token to the blacklist
+      await TokenBlacklistModel.blacklistToken(token, userId, 'access', 'logout');
+
+      // If refresh token is provided in the request body, blacklist it too
+      const { refresh_token } = req.body;
+      if (refresh_token) {
+        try {
+          await TokenBlacklistModel.blacklistToken(refresh_token, userId, 'refresh', 'logout');
+        } catch (error) {
+          // Log the error but don't fail the logout process
+          console.error('Error blacklisting refresh token:', error);
+        }
+      }
+
+      res.status(200).json({
+        message: 'Logout successful',
+        details: 'All tokens have been invalidated'
       });
     } catch (error) {
       next(error);

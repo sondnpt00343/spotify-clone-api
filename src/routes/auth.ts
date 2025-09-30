@@ -61,6 +61,12 @@ router.post('/refresh-token',
   AuthController.refreshToken
 );
 
+router.post('/logout', 
+  authLimiter,
+  authenticateToken,
+  AuthController.logout
+);
+
 router.get('/users/me', 
   generalAuthLimiter,
   authenticateToken, 

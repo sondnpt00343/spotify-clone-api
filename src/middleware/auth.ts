@@ -11,11 +11,11 @@ declare global {
   }
 }
 
-export const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
+export const authenticateToken = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const authHeader = req.headers.authorization;
     const token = extractTokenFromHeader(authHeader);
-    const decoded = verifyToken(token);
+    const decoded = await verifyToken(token);
     
     req.user = decoded;
     next();
@@ -24,13 +24,13 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
   }
 };
 
-export const optionalAuth = (req: Request, res: Response, next: NextFunction) => {
+export const optionalAuth = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const authHeader = req.headers.authorization;
     
     if (authHeader) {
       const token = extractTokenFromHeader(authHeader);
-      const decoded = verifyToken(token);
+      const decoded = await verifyToken(token);
       req.user = decoded;
     }
     
